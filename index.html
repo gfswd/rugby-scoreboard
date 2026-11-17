@@ -11,7 +11,103 @@
   <meta name="apple-mobile-web-app-title" content="Rugby Score">
   <meta name="theme-color" content="#0d1117">
 
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Rugby%20Referee%20Scoreboard%22%2C%22short_name%22%3A%22RugbyScore%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%3E%3Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27100%27%20fill%3D%27%23161b22%27%2F%3E%3Ctext%20x%3D%2750%25%27%20y%3D%2755%25%27%20font-size%3D%27280%27%20text-anchor%3D%27middle%27%20dominant-baseline%3D%27middle%27%3E%F0%9F%8F%89%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
+  <link rel="manifest" id="dynamicManifest">
+  <link rel="apple-touch-icon" id="appleTouchIcon">
+  <link rel="icon" type="image/png" id="faviconLink">
+
+  <script>
+    (function setupDynamicPwa() {
+      try {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 512;
+        const ctx = c.getContext('2d');
+
+        // Background
+        ctx.fillStyle = '#161b22';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Subtle pitch border
+        ctx.strokeStyle = '#388bfd';
+        ctx.lineWidth = 18;
+        ctx.strokeRect(24, 24, 464, 464);
+
+        // Rugby ball graphic (tilted oval with laces)
+        ctx.save();
+        ctx.translate(256, 256);
+        ctx.rotate(-Math.PI / 4);
+
+        // Ball body
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 165, 102, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#f0f6fc';
+        ctx.fill();
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = '#0d1117';
+        ctx.stroke();
+
+        // Stripes
+        ctx.fillStyle = '#388bfd';
+        ctx.fillRect(-105, -78, 22, 156);
+        ctx.fillRect(83, -78, 22, 156);
+
+        // Center seam & laces
+        ctx.strokeStyle = '#0d1117';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(-60, 0);
+        ctx.lineTo(60, 0);
+        ctx.stroke();
+
+        for (let x = -42; x <= 42; x += 21) {
+          ctx.beginPath();
+          ctx.moveTo(x, -16);
+          ctx.lineTo(x, 16);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        const pngDataUrl = c.toDataURL('image/png');
+
+        const appleIcon = document.getElementById('appleTouchIcon');
+        const favicon = document.getElementById('faviconLink');
+        if (appleIcon) appleIcon.href = pngDataUrl;
+        if (favicon) favicon.href = pngDataUrl;
+
+        const baseUrl = window.location.href.split('#')[0].split('?')[0];
+        const manifestObj = {
+          name: "Rugby Referee Scoreboard",
+          short_name: "RugbyScore",
+          description: "World Rugby Referee Scoreboard, Law 3 Subs & Law 9 Sin Bin Timer",
+          start_url: baseUrl,
+          scope: baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1),
+          display: "standalone",
+          orientation: "any",
+          background_color: "#0d1117",
+          theme_color: "#0d1117",
+          icons: [
+            {
+              src: pngDataUrl,
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any"
+            },
+            {
+              src: pngDataUrl,
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable"
+            }
+          ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const manifestEl = document.getElementById('dynamicManifest');
+        if (manifestEl) manifestEl.href = manifestUrl;
+      } catch (e) {}
+    })();
+  </script>
 
   <style>
     :root {
@@ -40,32 +136,7 @@
       display: flex;
       flex-direction: column;
     }
-    button { touch-action: manipulation; cursor: pointer; font-family: inherit; user-select: none; -webkit-user-select: none; }
-
-    /* === FULLSCREEN SHOW-CARD OVERLAY === */
-    .fullscreen-card-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 999;
-      display: none;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px) 20px;
-      cursor: pointer;
-    }
-    .fullscreen-card-overlay.yellow { background: #facc15; color: #111827; }
-    .fullscreen-card-overlay.red { background: #dc2626; color: #ffffff; }
-    .fullscreen-card-hint {
-      font-size: 0.95rem;
-      font-weight: 800;
-      opacity: 0.72;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      padding: 8px 16px;
-      border-radius: 20px;
-      background: rgba(0,0,0,0.12);
-    }
+    button { touch-action: manipulation; cursor: pointer; font-family: inherit; }
 
     /* === TOAST NOTIFICATIONS (Non-blocking alerts) === */
     .toast-container {
@@ -111,34 +182,27 @@
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
-      gap: 4px;
+      gap: 6px;
       height: 42px;
     }
     .header-left, .header-right {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
     }
     .period-badge {
-      background: #21262d; border: 1px solid var(--border); padding: 4px 9px;
-      border-radius: 14px; font-weight: bold; font-size: 0.78rem; cursor: pointer;
+      background: #21262d; border: 1px solid var(--border); padding: 4px 10px;
+      border-radius: 14px; font-weight: bold; font-size: 0.8rem; cursor: pointer;
       color: #58a6ff; white-space: nowrap;
     }
     .btn-header {
       background: #21262d; border: 1px solid var(--border); color: var(--text);
-      padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+      padding: 4px 9px; border-radius: 6px; font-size: 0.76rem; font-weight: 600;
       white-space: nowrap;
     }
-    .btn-show-card {
-      width: 28px; height: 28px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.28);
-      display: flex; align-items: center; justify-content: center; font-size: 0.75rem;
-      font-weight: 900; flex-shrink: 0;
-    }
-    .btn-show-card.yellow { background: #facc15; color: #111827; }
-    .btn-show-card.red { background: #dc2626; color: #ffffff; }
     .btn-menu {
       background: #21262d; border: 1px solid var(--border); color: #f0f6fc;
-      font-size: 1.15rem; padding: 2px 9px; border-radius: 6px; line-height: 1.2;
+      font-size: 1.15rem; padding: 2px 10px; border-radius: 6px; line-height: 1.2;
     }
 
     /* === MAIN SCOREBOARD CONTAINER === */
@@ -151,7 +215,7 @@
     /* Landscape View */
     body.mode-landscape .scoreboard-container,
     body.mode-auto:not(.is-portrait) .scoreboard-container {
-      grid-template-columns: 1fr minmax(200px, 232px) 1fr;
+      grid-template-columns: 1fr minmax(200px, 230px) 1fr;
       grid-template-rows: 1fr;
     }
     body.mode-landscape .team-panel.home, body.mode-auto:not(.is-portrait) .team-panel.home { order: 1; }
@@ -194,7 +258,7 @@
     }
     .team-timers-list {
       display: flex; flex-direction: column; gap: 2px; max-height: 100%;
-      overflow-y: auto; flex-shrink: 1; min-width: 0; max-width: 62%;
+      overflow-y: auto; flex-shrink: 1; min-width: 0; max-width: 60%;
     }
     .team-timers-list:empty { display: none; }
     .score-display {
@@ -203,7 +267,7 @@
       font-variant-numeric: tabular-nums; user-select: none;
     }
 
-    /* === SCORING BUTTONS (SWAPPED: Try + Conv on top; PT + Pen + Drop below) === */
+    /* === SCORING BUTTONS & PENALTY TRY + CORRECTION MENU BUTTON === */
     .rugby-buttons { display: flex; flex-direction: column; gap: 3px; margin-top: auto; flex-shrink: 0; }
     .try-row, .kicks-row { display: grid; gap: 3px; }
     
@@ -214,11 +278,11 @@
     }
     .btn-score span { font-size: 0.56rem; font-weight: 500; opacity: 0.92; }
     .home .btn-try { background: var(--home-team-bg, #1f6feb); color: var(--home-team-text, #fff); }
+    .home .btn-pt  { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); border: 1px solid rgba(255,255,255,0.25); }
     .home .btn-sec { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); }
-    .home .btn-pt  { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); border: 1px solid rgba(255,255,255,0.28); }
     .away .btn-try { background: var(--away-team-bg, #da3633); color: var(--away-team-text, #fff); }
+    .away .btn-pt  { background: var(--away-team-sec, #b62324); color: var(--away-team-text, #fff); border: 1px solid rgba(255,255,255,0.25); }
     .away .btn-sec { background: var(--away-team-sec, #b62324); color: var(--away-team-text, #fff); }
-    .away .btn-pt  { background: var(--away-team-sec, #b62324); color: var(--away-team-text, #fff); border: 1px solid rgba(255,255,255,0.28); }
 
     .btn-corr-menu {
       width: 100%;
@@ -236,18 +300,18 @@
     }
     .btn-corr-menu:active { background: #30363d; color: #f0f6fc; border-color: #8b949e; }
 
-    /* Full Mode Layout: Try (2.8fr) + Conv (1.2fr) on top; PT + Pen + Drop (3 equal) below */
+    /* Full Mode Layout: Try (3fr) + Penalty Try (1.15fr) on top, 3 kicks below */
     body.view-adult .try-row { grid-template-columns: 2.8fr 1.2fr; }
     body.view-adult .try-row .btn-try {
       font-size: clamp(1.0rem, 2.0vh, 1.22rem);
       font-weight: 900;
     }
-    body.view-adult .try-row .btn-sec {
-      font-size: clamp(0.84rem, 1.75vh, 1.0rem);
+    body.view-adult .try-row .btn-pt {
+      font-size: clamp(0.82rem, 1.7vh, 0.98rem);
       font-weight: 800;
     }
     body.view-adult .kicks-row { grid-template-columns: repeat(3, 1fr); }
-    body.view-adult .kicks-row .btn-score {
+    body.view-adult .kicks-row .btn-sec {
       padding: clamp(4px, 1.0vh, 7px) 2px;
       font-size: clamp(0.76rem, 1.6vh, 0.9rem);
     }
@@ -264,7 +328,7 @@
       font-weight: 900;
       border-radius: 6px;
     }
-    body.view-youth .btn-conv-main {
+    body.view-youth .btn-sec {
       grid-column: 2;
       padding: clamp(8px, 1.8vh, 13px) 2px;
       font-size: clamp(0.85rem, 1.8vh, 1.0rem);
@@ -314,19 +378,12 @@
     }
     .cards-header {
       display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.64rem; font-weight: bold; color: var(--card-yellow);
+      font-size: 0.66rem; font-weight: bold; color: var(--card-yellow);
     }
     .cards-quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
     .btn-card-add {
       background: #2a2412; border: 1px solid rgba(227, 179, 65, 0.5); color: #fce881;
       padding: 4px 2px; border-radius: 4px; font-size: 0.68rem; font-weight: 700;
-      transition: transform 0.12s, background 0.12s, border-color 0.12s;
-    }
-    .btn-card-add.holding-review {
-      background: #7f1d1d !important;
-      border-color: #ef4444 !important;
-      color: #fff !important;
-      transform: scale(0.96);
     }
 
     .btn-quick-note {
@@ -337,19 +394,17 @@
 
     /* Timer Pills */
     .timer-pill {
-      font-size: 0.63rem; padding: 2px 4px; border-radius: 4px; background: #161b22;
+      font-size: 0.64rem; padding: 2px 4px; border-radius: 4px; background: #161b22;
       display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);
-      gap: 3px;
+      gap: 4px;
     }
     .timer-pill.sinbin { border-color: var(--card-yellow); background: rgba(227, 179, 65, 0.12); }
-    .timer-pill.review { border-color: #f85149; background: linear-gradient(90deg, rgba(227, 179, 65, 0.16), rgba(218, 54, 51, 0.22)); }
-    .timer-pill.red20 { border-color: var(--card-red); background: rgba(218, 54, 51, 0.18); }
     .timer-pill.blood { border-color: var(--blood-color); background: rgba(248, 81, 73, 0.12); }
     .timer-pill.hia { border-color: var(--hia-color); background: rgba(240, 136, 62, 0.12); }
     .timer-pill-adjust { display: flex; align-items: center; gap: 2px; }
     .btn-pill-small {
       background: #21262d; border: 1px solid var(--border); color: var(--text);
-      font-size: 0.58rem; padding: 1px 4px; border-radius: 3px;
+      font-size: 0.6rem; padding: 1px 4px; border-radius: 3px;
     }
 
     /* === DRAWER MENU === */
@@ -395,33 +450,6 @@
     }
     .modal-content-wide { max-width: 860px; }
 
-    /* Numeric Input Styling */
-    .num-input-large {
-      width: 110px;
-      font-size: 1.7rem;
-      font-weight: 900;
-      font-family: monospace;
-      text-align: center;
-      background: #0d1117;
-      color: #fff;
-      border: 2px solid #30363d;
-      border-radius: 8px;
-      padding: 6px;
-    }
-    .num-input-large:focus { border-color: #58a6ff; outline: none; }
-
-    /* Card Modal Option Pills */
-    .card-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .btn-card-type {
-      background: #21262d; border: 1px solid var(--border); color: var(--text);
-      padding: 9px 6px; border-radius: 7px; font-size: 0.78rem; font-weight: 700;
-      text-align: center;
-    }
-    .btn-card-type.selected-yellow { background: rgba(227, 179, 65, 0.22); border-color: #e3b341; color: #fce881; }
-    .btn-card-type.selected-review { background: linear-gradient(135deg, rgba(227, 179, 65, 0.22), rgba(218, 54, 51, 0.28)); border-color: #f85149; color: #fff; }
-    .btn-card-type.selected-red20  { background: rgba(218, 54, 51, 0.25); border-color: #f85149; color: #ffa198; }
-    .btn-card-type.selected-redfull { background: #991b1b; border-color: #ef4444; color: #fff; }
-
     /* Correction Modal Grid */
     .corr-list { display: flex; flex-direction: column; gap: 6px; }
     .btn-corr-option {
@@ -462,7 +490,7 @@
     }
     .toss-choice-btn.selected { background: #d4a017; color: #000; border-color: #ffe066; }
 
-    /* === SUBSTITUTIONS MODAL === */
+    /* === SUBSTITUTIONS MODAL (Law 3 + 3-Digit Custom Numbers) === */
     .subs-team-tabs { display: flex; gap: 8px; }
     .subs-tab-btn {
       flex: 1; padding: 7px; background: #21262d; border: 1px solid var(--border);
@@ -536,7 +564,6 @@
     .status-tag.tactical { color: #79c0ff; background: rgba(56, 139, 253, 0.15); }
     .status-tag.injured { color: #8b949e; background: rgba(139, 148, 158, 0.15); }
     .status-tag.sinbin { color: #e3b341; background: rgba(227, 179, 65, 0.15); }
-    .status-tag.review { color: #fca5a5; background: rgba(220, 38, 38, 0.25); }
     .status-tag.redcard { color: #f85149; background: rgba(218, 54, 51, 0.2); }
     .status-tag.temp { color: #f0883e; background: rgba(240, 136, 62, 0.18); }
 
@@ -550,12 +577,6 @@
 </head>
 <body class="mode-auto view-adult">
 
-  <!-- Fullscreen Yellow / Red Card Overlay for Pitch Display -->
-  <div class="fullscreen-card-overlay" id="fullscreenCardOverlay" onclick="closeFullscreenCard()">
-    <div class="fullscreen-card-hint" id="fullscreenCardTitle">YELLOW CARD</div>
-    <div class="fullscreen-card-hint">Tap anywhere to close</div>
-  </div>
-
   <!-- Non-blocking Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -567,8 +588,6 @@
       <button class="btn-header adult-only" onclick="openSubsModal()">🔄 Subs (<span id="activeTimersCount">0</span>)</button>
     </div>
     <div class="header-right">
-      <button class="btn-show-card yellow" onclick="showFullscreenCard('yellow')" title="Show Fullscreen Yellow Card">🟨</button>
-      <button class="btn-show-card red" onclick="showFullscreenCard('red')" title="Show Fullscreen Red Card">🟥</button>
       <button class="btn-header" style="background:#238636; color:#fff;" onclick="openShareModal()">📤 Share</button>
       <button class="btn-menu" onclick="openDrawer()" title="Menu">☰</button>
     </div>
@@ -592,10 +611,10 @@
       <div class="rugby-buttons">
         <div class="try-row">
           <button class="btn-score btn-try" onclick="score('home', 5, 'Try', 't')">+5 <span>Try</span></button>
-          <button class="btn-score btn-sec btn-conv-main" onclick="score('home', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
+          <button class="btn-score btn-pt adult-only" onclick="score('home', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
         </div>
         <div class="kicks-row">
-          <button class="btn-score btn-pt adult-only" onclick="score('home', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
+          <button class="btn-score btn-sec" onclick="score('home', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
         </div>
@@ -616,17 +635,17 @@
         <button class="btn-end-half" id="endHalfBtn" onclick="promptEndHalf()">🏁 End 1st Half</button>
       </div>
 
-      <!-- Quick Cards Section (Tap Yellow = Sin Bin | Press & Hold Yellow = Bunker Review 🟨➔🟥) -->
+      <!-- Quick Cards Section -->
       <div class="cards-quick-box">
         <div class="cards-header">
-          <span>🟨 CARDS (Hold 🟨=Review)</span>
-          <span id="defaultYellowDurationLabel" onclick="openYellowDurModal()" style="cursor:pointer; text-decoration:underline;">Dur: 10m ✎</span>
+          <span>🟨 CARDS / DISCIPLINE</span>
+          <span id="defaultYellowDurationLabel" onclick="promptDefaultYellowDuration()" style="cursor:pointer; text-decoration:underline;">Dur: 10m ✎</span>
         </div>
         <div class="cards-quick-buttons">
-          <button class="btn-card-add" id="btnYellowHome">+ 🟨 Home</button>
-          <button class="btn-card-add" id="btnYellowAway">+ 🟨 Away</button>
-          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="openCardIssueModal('home', 'red_20')">+ 🟥 Home</button>
-          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="openCardIssueModal('away', 'red_20')">+ 🟥 Away</button>
+          <button class="btn-card-add" onclick="quickYellowCard('home')">+ 🟨 Home</button>
+          <button class="btn-card-add" onclick="quickYellowCard('away')">+ 🟨 Away</button>
+          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="quickRedCardPrompt('home')">+ 🟥 Home</button>
+          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="quickRedCardPrompt('away')">+ 🟥 Away</button>
         </div>
       </div>
 
@@ -649,10 +668,10 @@
       <div class="rugby-buttons">
         <div class="try-row">
           <button class="btn-score btn-try" onclick="score('away', 5, 'Try', 't')">+5 <span>Try</span></button>
-          <button class="btn-score btn-sec btn-conv-main" onclick="score('away', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
+          <button class="btn-score btn-pt adult-only" onclick="score('away', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
         </div>
         <div class="kicks-row">
-          <button class="btn-score btn-pt adult-only" onclick="score('away', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
+          <button class="btn-score btn-sec" onclick="score('away', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
         </div>
@@ -667,14 +686,6 @@
     <div class="drawer-header">
       <h3 style="font-size:1.1rem; color:#58a6ff;">🏉 Match Menu</h3>
       <button class="btn-pill-small" style="font-size:0.9rem;" onclick="closeDrawer()">✕</button>
-    </div>
-
-    <div>
-      <div class="drawer-section-title">Show Card Fullscreen</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:5px;">
-        <button class="drawer-btn" style="background:#facc15; color:#111827; justify-content:center; font-weight:800;" onclick="closeDrawer(); showFullscreenCard('yellow');">🟨 Yellow Card</button>
-        <button class="drawer-btn" style="background:#dc2626; color:#fff; justify-content:center; font-weight:800;" onclick="closeDrawer(); showFullscreenCard('red');">🟥 Red Card</button>
-      </div>
     </div>
 
     <div>
@@ -701,60 +712,6 @@
 
     <div style="margin-top:auto;">
       <button class="drawer-btn danger" onclick="closeDrawer(); promptResetAll();">⚠️ New Match (Reset All)</button>
-    </div>
-  </div>
-
-  <!-- Modal: Numeric Card Issue Modal (Yellow / Yellow Bunker Review / 20m Red / Full Red) -->
-  <div class="modal" id="cardIssueModal">
-    <div class="modal-content" style="max-width: 410px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
-        <h3 id="cardIssueTitle" style="color:#fce881; font-size:1.0rem;">🟨 Issue Card</h3>
-        <button class="btn-pill-small" style="font-size:0.85rem; padding:2px 7px;" onclick="closeModal('cardIssueModal')">✕</button>
-      </div>
-
-      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-        <label for="cardJerseyInput" style="font-size:0.78rem; color:var(--text-muted); font-weight:700;">Player Jersey Number (1–999):</label>
-        <input type="number" id="cardJerseyInput" class="num-input-large" inputmode="numeric" pattern="[0-9]*" min="1" max="999" placeholder="#">
-      </div>
-
-      <div class="card-type-grid">
-        <button type="button" class="btn-card-type" id="typeYellowBtn" onclick="selectCardModalType('yellow')">🟨 Yellow (Sin Bin)</button>
-        <button type="button" class="btn-card-type" id="typeReviewBtn" onclick="selectCardModalType('yellow_review')">🟨➔🟥 Yellow (Review)</button>
-        <button type="button" class="btn-card-type" id="typeRed20Btn" onclick="selectCardModalType('red_20')">🟥 20-Min Red Card</button>
-        <button type="button" class="btn-card-type" id="typeRedFullBtn" onclick="selectCardModalType('red_full')">🟥 Full Red (Perm.)</button>
-      </div>
-
-      <div id="cardDurationWrap" style="display:flex; justify-content:center; align-items:center; gap:8px; background:#0d1117; padding:8px; border-radius:8px; border:1px solid var(--border);">
-        <span style="font-size:0.82rem; font-weight:700; color:var(--text-muted);">Sin Bin Minutes:</span>
-        <input type="number" id="cardDurationInput" inputmode="numeric" pattern="[0-9]*" min="1" max="60" value="10" style="width:64px; font-size:1.15rem; font-weight:900; text-align:center; background:#161b22; color:#fff; border:1px solid #30363d; border-radius:6px; padding:4px;">
-      </div>
-
-      <div id="cardTypeDesc" style="font-size:0.74rem; color:var(--text-muted); text-align:center; line-height:1.35;"></div>
-
-      <div style="display:flex; gap:8px; margin-top:4px;">
-        <button class="btn-header" style="flex:1; padding:10px;" onclick="closeModal('cardIssueModal')">Cancel</button>
-        <button class="btn-header" style="flex:1.4; padding:10px; background:#238636; color:#fff; font-weight:800;" onclick="confirmCardIssue()">Confirm Card</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Default Yellow Duration (Numeric Keypad) -->
-  <div class="modal" id="yellowDurModal">
-    <div class="modal-content" style="max-width: 340px; text-align: center;">
-      <h3 style="color:#fce881; font-size:1.0rem;">🟨 Default Sin Bin Duration</h3>
-      <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin:6px 0;">
-        <input type="number" id="defaultYellowInput" class="num-input-large" inputmode="numeric" pattern="[0-9]*" min="1" max="60" value="10">
-        <span style="font-weight:bold; color:var(--text-muted);">min</span>
-      </div>
-      <div style="display:flex; justify-content:center; gap:6px;">
-        <button class="btn-header" onclick="document.getElementById('defaultYellowInput').value=2">2m (7s)</button>
-        <button class="btn-header" onclick="document.getElementById('defaultYellowInput').value=5">5m (Youth)</button>
-        <button class="btn-header" onclick="document.getElementById('defaultYellowInput').value=10">10m (Adult)</button>
-      </div>
-      <div style="display:flex; gap:8px; margin-top:6px;">
-        <button class="btn-header" style="flex:1; padding:8px;" onclick="closeModal('yellowDurModal')">Cancel</button>
-        <button class="btn-header" style="flex:1; padding:8px; background:#238636; color:#fff;" onclick="saveYellowDurModal()">Apply</button>
-      </div>
     </div>
   </div>
 
@@ -807,7 +764,7 @@
     </div>
   </div>
 
-  <!-- Modal: Notes & Incidents (Standard Text Keyboard) -->
+  <!-- Modal: Notes & Incidents -->
   <div class="modal" id="notesModal">
     <div class="modal-content">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -851,14 +808,14 @@
     </div>
   </div>
 
-  <!-- Modal: Match Time (Numeric Keypad) -->
+  <!-- Modal: Match Time -->
   <div class="modal" id="timeModal">
     <div class="modal-content">
       <h3 style="color:#58a6ff;">Set Match Time</h3>
       <div style="display:flex; justify-content:center; gap:8px;">
-        <input type="number" id="modalMin" inputmode="numeric" pattern="[0-9]*" value="10" min="0" max="90" style="width:70px; font-size:1.5rem; text-align:center; background:#0d1117; color:#fff; border:1px solid #30363d; border-radius:6px;">
+        <input type="number" id="modalMin" value="10" min="0" max="90" style="width:70px; font-size:1.5rem; text-align:center; background:#0d1117; color:#fff; border:1px solid #30363d; border-radius:6px;">
         <span style="font-size:1.5rem;">:</span>
-        <input type="number" id="modalSec" inputmode="numeric" pattern="[0-9]*" value="00" min="0" max="59" step="5" style="width:70px; font-size:1.5rem; text-align:center; background:#0d1117; color:#fff; border:1px solid #30363d; border-radius:6px;">
+        <input type="number" id="modalSec" value="00" min="0" max="59" step="5" style="width:70px; font-size:1.5rem; text-align:center; background:#0d1117; color:#fff; border:1px solid #30363d; border-radius:6px;">
       </div>
       <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">
         <button class="btn-header" onclick="setModalMin(7, 2)">7m (7s • 2m 🟨)</button>
@@ -883,7 +840,7 @@
     </div>
   </div>
 
-  <!-- Modal: Substitutions & Discipline (Law 3 + 1-3 Digit Custom Jersey Support + Numeric Keypad) -->
+  <!-- Modal: Substitutions & Discipline (Law 3 + 1-3 Digit Custom Jersey Support) -->
   <div class="modal" id="subsModal">
     <div class="modal-content modal-content-wide">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -896,13 +853,13 @@
         <button class="subs-tab-btn away-tab" id="tabAwayBtn" onclick="switchSubsTeam('away')">Away (<span id="awaySubsUsed">0</span>/8)</button>
       </div>
 
-      <!-- Quick Sub Bar: Numeric Keypad for 1-3 digit jersey numbers (1-999) -->
+      <!-- Quick Sub Bar: Supports any 1-3 digit jersey numbers (1-999) -->
       <div class="quick-sub-bar">
         <div class="quick-sub-inputs">
           <span style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">Off #</span>
-          <input type="number" id="quickOffNum" class="input-jersey" inputmode="numeric" pattern="[0-9]*" placeholder="10" min="1" max="999">
+          <input type="number" id="quickOffNum" class="input-jersey" placeholder="e.g. 10" min="1" max="999">
           <span style="font-size:0.78rem; color:#58a6ff; font-weight:900;">➔ On #</span>
-          <input type="number" id="quickOnNum" class="input-jersey" inputmode="numeric" pattern="[0-9]*" placeholder="124" min="1" max="999">
+          <input type="number" id="quickOnNum" class="input-jersey" placeholder="e.g. 124" min="1" max="999">
           <select id="quickSubReason" class="select-sub-type">
             <option value="Tactical">Tactical Sub</option>
             <option value="Injury">Injury (Permanent)</option>
@@ -918,7 +875,7 @@
       </div>
 
       <div style="font-size:0.68rem; color:var(--text-muted); margin-top:-4px;">
-        💡 Tip: Tap any <strong>#number</strong> to edit (1–999). Press & hold 🟨 on a player row for Bunker Review (🟨➔🟥).
+        💡 Tip: Tap any <strong>#number</strong> below to edit its jersey number (1–999). Blood & HIA timers run in continuous <em>actual time</em> (Law 3.25/3.27).
       </div>
 
       <div class="subs-zones">
@@ -1028,10 +985,6 @@
     let currentColorTarget = 'home';
     let currentCorrectionTeam = 'home';
     let pendingTimeModalYellowMin = null;
-
-    let cardModalTeam = 'home';
-    let cardModalType = 'yellow';
-
     const STORAGE_KEY = 'rugby_match_state_v1';
     const periods = ["1st Half", "2nd Half", "Full Time"];
 
@@ -1045,23 +998,6 @@
       { name: "Light Grey", hex: "#8b949e" }, { name: "Dark Grey", hex: "#484f58" },
       { name: "Teal", hex: "#39c5cf" }
     ];
-
-    /* === Fullscreen Card Display (Yellow / Red) === */
-    function showFullscreenCard(color) {
-      const overlay = document.getElementById('fullscreenCardOverlay');
-      const title = document.getElementById('fullscreenCardTitle');
-      overlay.classList.remove('yellow', 'red');
-      overlay.classList.add(color);
-      title.textContent = color === 'yellow' ? '🟨 YELLOW CARD' : '🟥 RED CARD';
-      overlay.style.display = 'flex';
-      if (navigator.vibrate) {
-        try { navigator.vibrate(color === 'yellow' ? [200] : [350, 100, 350]); } catch (e) {}
-      }
-    }
-
-    function closeFullscreenCard() {
-      document.getElementById('fullscreenCardOverlay').style.display = 'none';
-    }
 
     /* === iOS / Mobile Audio Unlocker === */
     function unlockAudioContext() {
@@ -1100,48 +1036,6 @@
       }
     }
 
-    /* === Press-and-Hold Helper for Yellow Card Bunker Review === */
-    function bindPressHold(el, onShortTap, onLongHold, holdMs = 620) {
-      if (!el) return;
-      let holdTimer = null;
-      let held = false;
-
-      const start = (e) => {
-        if (e.button && e.button !== 0) return;
-        held = false;
-        el.classList.add('holding-review');
-        holdTimer = setTimeout(() => {
-          held = true;
-          el.classList.remove('holding-review');
-          if (navigator.vibrate) { try { navigator.vibrate([80, 50, 140]); } catch (err) {} }
-          onLongHold();
-        }, holdMs);
-      };
-
-      const cancel = () => {
-        el.classList.remove('holding-review');
-        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      };
-
-      const end = (e) => {
-        el.classList.remove('holding-review');
-        if (holdTimer) {
-          clearTimeout(holdTimer);
-          holdTimer = null;
-          if (!held) {
-            e.preventDefault();
-            onShortTap();
-          }
-        }
-      };
-
-      el.addEventListener('pointerdown', start);
-      el.addEventListener('pointerup', end);
-      el.addEventListener('pointerleave', cancel);
-      el.addEventListener('pointercancel', cancel);
-      el.addEventListener('contextmenu', (e) => e.preventDefault());
-    }
-
     /* Drawer */
     function openDrawer() {
       document.getElementById('drawer').classList.add('open');
@@ -1173,8 +1067,14 @@
 
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
       const swCode = `
-        const CACHE = 'rugby-clean-v6';
-        self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll([location.href]))));
+        const CACHE = 'rugby-clean-v7';
+        self.addEventListener('install', e => {
+          self.skipWaiting();
+          e.waitUntil(caches.open(CACHE).then(c => c.addAll([location.href])));
+        });
+        self.addEventListener('activate', e => {
+          e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+        });
         self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
       `;
       navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: 'application/javascript' }))).catch(() => {});
@@ -1222,26 +1122,23 @@
     }
 
     /* === World Rugby Law 3 & Law 9 Timer Engine (Playing Time vs. Actual Time) === */
-    function tickPlayerTimers(deltaSec, includePlayingTime) {
+    function tickPlayerTimers(deltaSec, includePlayingTimeSinBin) {
       if (deltaSec <= 0) return;
       ['home', 'away'].forEach(teamKey => {
         const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
         state.squads[teamKey].forEach(p => {
           if (p.timerSec > 0) {
-            const isPlayingTimeTimer = (p.timerType === 'SinBin' || p.timerType === 'YellowReview' || p.timerType === 'Red20');
-            if (isPlayingTimeTimer && !includePlayingTime) return;
+            const isSinBin = p.timerType === 'SinBin';
+            if (isSinBin && !includePlayingTimeSinBin) return;
 
             p.timerSec = Math.max(0, p.timerSec - deltaSec);
             if (p.timerSec === 0) {
               const expiredType = p.timerType;
               triggerAirhornShort3();
-              if (expiredType === 'SinBin' || expiredType === 'YellowReview') {
+              if (expiredType === 'SinBin') {
                 p.status = 'field';
                 p.timerType = null;
                 showToast(`⏱ SIN BIN ENDED: ${teamLabel} #${p.number} may return to the pitch!`, '#e3b341', 12000);
-              } else if (expiredType === 'Red20') {
-                p.timerType = null;
-                showToast(`🟥 20-MIN RED EXPIRED (Law 9.30): ${teamLabel} may bring on a replacement for #${p.number}!`, '#f85149', 14000);
               } else if (expiredType === 'Blood') {
                 p.status = 'injured_off';
                 p.timerType = null;
@@ -1291,7 +1188,6 @@
       const curBlocks = Math.floor(state.pauseSeconds / 30);
       if (curBlocks > prevBlocks) triggerAirhornShort3();
 
-      // Blood Bin (15m) and HIA (12m) run in continuous Actual Time even during stoppages (Law 3.25 / 3.27b)
       tickPlayerTimers(deltaSec, false);
     }
 
@@ -1509,7 +1405,7 @@
 
       if (val === 7 && statKey === 'pt') {
         const oppLabel = team === 'home' ? state.awayName : state.homeName;
-        showToast(`🏉 PENALTY TRY (+7)! Law 8.3: No conversion. Issue 🟨 or 🟥 to offending ${oppLabel} player!`, '#e3b341', 9000);
+        showToast(`🏉 PENALTY TRY (+7)! Law 8.3: No conversion. Remember to issue 🟨 or 🟥 to offending ${oppLabel} player!`, '#e3b341', 9000);
       }
 
       render();
@@ -1575,73 +1471,13 @@
       render();
     }
 
-    /* === Cards & Discipline (Numeric Modal, Bunker Review Press-Hold, 20-Min Red, 2nd Yellow = Red) === */
-    function openYellowDurModal() {
-      document.getElementById('defaultYellowInput').value = state.defaultYellowMinutes;
-      document.getElementById('yellowDurModal').style.display = 'flex';
-      setTimeout(() => document.getElementById('defaultYellowInput').focus(), 60);
-    }
-
-    function saveYellowDurModal() {
-      const p = parseInt(document.getElementById('defaultYellowInput').value, 10);
-      if (p > 0 && p <= 60) {
-        state.defaultYellowMinutes = p;
-        render();
+    /* === Cards & Discipline (Law 9.29 Automatic 2nd Yellow -> Red + 1-999 Jersey Support) === */
+    function promptDefaultYellowDuration() {
+      const val = prompt("Standard Sin Bin duration (minutes):", state.defaultYellowMinutes);
+      if (val) {
+        const p = parseInt(val, 10);
+        if (p > 0 && p <= 90) { state.defaultYellowMinutes = p; render(); }
       }
-      closeModal('yellowDurModal');
-    }
-
-    function openCardIssueModal(teamKey, defaultType = 'yellow', prefillJersey = '') {
-      cardModalTeam = teamKey;
-      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
-      document.getElementById('cardIssueTitle').textContent = `Cards & Sanctions — ${teamLabel}`;
-      const jInput = document.getElementById('cardJerseyInput');
-      jInput.value = prefillJersey;
-      document.getElementById('cardDurationInput').value = state.defaultYellowMinutes;
-
-      selectCardModalType(defaultType);
-      document.getElementById('cardIssueModal').style.display = 'flex';
-      if (!prefillJersey) {
-        setTimeout(() => jInput.focus(), 60);
-      }
-    }
-
-    function selectCardModalType(type) {
-      cardModalType = type;
-      document.getElementById('typeYellowBtn').className = 'btn-card-type' + (type === 'yellow' ? ' selected-yellow' : '');
-      document.getElementById('typeReviewBtn').className = 'btn-card-type' + (type === 'yellow_review' ? ' selected-review' : '');
-      document.getElementById('typeRed20Btn').className = 'btn-card-type' + (type === 'red_20' ? ' selected-red20' : '');
-      document.getElementById('typeRedFullBtn').className = 'btn-card-type' + (type === 'red_full' ? ' selected-redfull' : '');
-
-      const durWrap = document.getElementById('cardDurationWrap');
-      const desc = document.getElementById('cardTypeDesc');
-
-      if (type === 'yellow') {
-        durWrap.style.display = 'flex';
-        desc.textContent = "Law 9.29: Temporary suspension (Playing Time). Player returns when timer ends.";
-      } else if (type === 'yellow_review') {
-        durWrap.style.display = 'flex';
-        desc.textContent = "🟨➔🟥 Off-Field Review (Bunker): Starts Sin Bin timer; hold badge later to upgrade to Red.";
-      } else if (type === 'red_20') {
-        durWrap.style.display = 'none';
-        desc.textContent = "Law 9.30 (20-Min Red): Player permanently sent off; team may replace after 20m playing time.";
-      } else {
-        durWrap.style.display = 'none';
-        desc.textContent = "Law 9.30 (Full Red): Player permanently sent off; team plays short for the remainder of the match.";
-      }
-    }
-
-    function confirmCardIssue() {
-      const num = parseJerseyNumber(document.getElementById('cardJerseyInput').value);
-      if (!num) {
-        showToast("Please enter a valid jersey number (1–999).", "#f85149", 3500);
-        document.getElementById('cardJerseyInput').focus();
-        return;
-      }
-
-      const dur = parseInt(document.getElementById('cardDurationInput').value, 10) || state.defaultYellowMinutes;
-      closeModal('cardIssueModal');
-      applyCardAction(cardModalTeam, num, cardModalType, dur);
     }
 
     function parseJerseyNumber(inputStr) {
@@ -1672,21 +1508,20 @@
       return p;
     }
 
-    function applyCardAction(teamKey, num, cardType, customDurMin = state.defaultYellowMinutes) {
+    function issueYellowCardToPlayer(teamKey, num) {
       const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
-      const snapshot = JSON.stringify(state.squads[teamKey]);
       const p = ensurePlayerInSquad(teamKey, num, 'field');
-      const elapsed = state.initialSeconds - state.secondsLeft;
-      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
 
-      if (cardType === 'yellow' || cardType === 'yellow_review') {
-        // Law 9.29: Second yellow card to the same player = automatic Red Card
-        if (p.yellowCount >= 1) {
+      if (p.yellowCount >= 1) {
+        if (confirm(`⚠️ LAW 9.29 ALERT: ${teamLabel} #${num} already received a Yellow Card!\n\nA second Yellow Card requires an automatic RED CARD (Send-Off). Issue Red Card (2nd Yellow) now?`)) {
+          const snapshot = JSON.stringify(state.squads[teamKey]);
           p.yellowCount++;
           p.status = 'red_card';
           p.timerSec = 0;
           p.timerType = 'Red';
 
+          const elapsed = state.initialSeconds - state.secondsLeft;
+          const min = Math.max(1, Math.floor(elapsed / 60) + 1);
           state.history.push({
             actionType: 'card_or_sub',
             team: teamKey,
@@ -1699,79 +1534,91 @@
             hScore: state.homeScore,
             aScore: state.awayScore
           });
-          showToast(`🟥 LAW 9.29: ${teamLabel} #${num} received 2nd Yellow ➔ Automatic RED CARD!`, '#da3633', 9000);
+          showToast(`🟥 ${teamLabel} #${num} sent off (2nd Yellow Card - Law 9.29)!`, '#da3633', 8000);
           if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
           render();
-          return;
         }
-
-        p.yellowCount = (p.yellowCount || 0) + 1;
-        p.status = 'sinbin';
-        p.timerSec = customDurMin * 60;
-        p.timerType = cardType === 'yellow_review' ? 'YellowReview' : 'SinBin';
-
-        const logLabel = cardType === 'yellow_review'
-          ? `🟨➔🟥 Yellow Card [Off-Field Review] (${customDurMin}m): #${num}`
-          : `🟨 Yellow Card (${customDurMin}m): #${num}`;
-
-        state.history.push({
-          actionType: 'card_or_sub',
-          team: teamKey,
-          teamName: teamLabel,
-          squadSnapshot: snapshot,
-          val: 0,
-          type: logLabel,
-          period: periods[state.periodIdx],
-          time: `${min}'`,
-          hScore: state.homeScore,
-          aScore: state.awayScore
-        });
-      } else if (cardType === 'red_20') {
-        p.status = 'red_card';
-        p.timerSec = 20 * 60;
-        p.timerType = 'Red20';
-
-        state.history.push({
-          actionType: 'card_or_sub',
-          team: teamKey,
-          teamName: teamLabel,
-          squadSnapshot: snapshot,
-          val: 0,
-          type: `🟥 20-Min Red Card (Replaceable after 20m): #${num}`,
-          period: periods[state.periodIdx],
-          time: `${min}'`,
-          hScore: state.homeScore,
-          aScore: state.awayScore
-        });
-        showToast(`🟥 20-Min Red Card issued to ${teamLabel} #${num} (Law 9.30).`, '#f85149', 6000);
-      } else if (cardType === 'red_full') {
-        p.status = 'red_card';
-        p.timerSec = 0;
-        p.timerType = 'Red';
-
-        state.history.push({
-          actionType: 'card_or_sub',
-          team: teamKey,
-          teamName: teamLabel,
-          squadSnapshot: snapshot,
-          val: 0,
-          type: `🟥 Full Red Card (Permanent Send-Off): #${num}`,
-          period: periods[state.periodIdx],
-          time: `${min}'`,
-          hScore: state.homeScore,
-          aScore: state.awayScore
-        });
-        showToast(`🟥 Full Red Card issued to ${teamLabel} #${num}.`, '#dc2626', 6000);
+        return;
       }
 
+      const durStr = prompt(`🟨 Sin Bin duration in minutes for #${num}:`, state.defaultYellowMinutes);
+      if (durStr === null) return;
+      const dur = parseInt(durStr, 10) || state.defaultYellowMinutes;
+
+      const snapshot = JSON.stringify(state.squads[teamKey]);
+      p.yellowCount = (p.yellowCount || 0) + 1;
+      p.status = 'sinbin';
+      p.timerSec = dur * 60;
+      p.timerType = 'SinBin';
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      state.history.push({
+        actionType: 'card_or_sub',
+        team: teamKey,
+        teamName: teamLabel,
+        squadSnapshot: snapshot,
+        val: 0,
+        type: `🟨 Yellow Card (${dur}m): #${num}`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
       if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
       render();
     }
 
-    function upgradeYellowToRed(teamKey, playerNum) {
-      const p = state.squads[teamKey].find(x => x.number === playerNum);
-      if (!p) return;
-      openCardIssueModal(teamKey, 'red_20', playerNum);
+    function quickYellowCard(teamKey) {
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      const numStr = prompt(`🟨 Yellow Card for ${teamLabel} - Jersey Number (1–999):`, "");
+      if (!numStr) return;
+      const num = parseJerseyNumber(numStr);
+      if (!num) {
+        showToast("Please enter a valid jersey number (1–999).", "#f85149", 4000);
+        return;
+      }
+      issueYellowCardToPlayer(teamKey, num);
+    }
+
+    function issueRedCardToPlayer(teamKey, num) {
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      if (!confirm(`🟥 Confirm Red Card (Permanent Send-Off) for ${teamLabel} #${num}?`)) return;
+
+      const snapshot = JSON.stringify(state.squads[teamKey]);
+      const p = ensurePlayerInSquad(teamKey, num, 'field');
+      p.status = 'red_card';
+      p.timerSec = 0;
+      p.timerType = 'Red';
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      state.history.push({
+        actionType: 'card_or_sub',
+        team: teamKey,
+        teamName: teamLabel,
+        squadSnapshot: snapshot,
+        val: 0,
+        type: `🟥 Red Card (Sent off): #${num}`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+      if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      render();
+    }
+
+    function quickRedCardPrompt(teamKey) {
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      const numStr = prompt(`🟥 Red Card for ${teamLabel} - Jersey Number (1–999):`, "");
+      if (!numStr) return;
+      const num = parseJerseyNumber(numStr);
+      if (!num) {
+        showToast("Please enter a valid jersey number (1–999).", "#f85149", 4000);
+        return;
+      }
+      issueRedCardToPlayer(teamKey, num);
     }
 
     function cancelTimerEarly(teamKey, playerNum) {
@@ -1781,15 +1628,9 @@
           returnTempPlayerToPitch(teamKey, playerNum);
           return;
         }
-        if (p.timerType === 'Red20') {
-          p.timerSec = 0;
-          p.timerType = null;
-          showToast(`🟥 20-Min Red timer cleared for #${playerNum}.`, '#8b949e', 3000);
-        } else {
-          p.status = 'field';
-          p.timerSec = 0;
-          p.timerType = null;
-        }
+        p.status = 'field';
+        p.timerSec = 0;
+        p.timerType = null;
       }
       if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
       render();
@@ -2077,7 +1918,6 @@
 
         if (p.status === 'field') {
           pitchCount++;
-          const yBtnId = `rowYBtn_${tk}_${p.number}`;
           row.innerHTML = `
             <div class="player-meta">
               <span class="player-num" onclick="editPlayerNumberOrName('${tk}', ${p.number})" title="Tap to edit jersey # (1-999) or name">#${p.number}</span>
@@ -2088,17 +1928,11 @@
               <button class="btn-action-small" style="border-color:#388bfd; color:#79c0ff;" onclick="promptRowSubOff('${tk}', ${p.number}, 'Tactical')" title="Tactical Sub Off">🔄 Sub</button>
               <button class="btn-action-small" style="border-color:#f85149; color:#ffa198;" onclick="promptRowSubOff('${tk}', ${p.number}, 'Blood')" title="Blood Bin 15m">🩸</button>
               <button class="btn-action-small" style="border-color:#f0883e; color:#ffa657;" onclick="promptRowSubOff('${tk}', ${p.number}, 'HIA')" title="HIA 12m">🧠</button>
-              <button class="btn-action-small" id="${yBtnId}" title="Tap: Yellow | Hold: Bunker Review">🟨</button>
-              <button class="btn-action-small" style="color:#da3633;" onclick="openCardIssueModal('${tk}', 'red_20', ${p.number})" title="Red Card">🟥</button>
+              <button class="btn-action-small" onclick="issueYellowCardToPlayer('${tk}', ${p.number})" title="Yellow Card">🟨</button>
+              <button class="btn-action-small" style="color:#da3633;" onclick="issueRedCardToPlayer('${tk}', ${p.number})" title="Red Card">🟥</button>
             </div>
           `;
           fl.appendChild(row);
-          const yBtnEl = document.getElementById(yBtnId);
-          bindPressHold(
-            yBtnEl,
-            () => openCardIssueModal(tk, 'yellow', p.number),
-            () => openCardIssueModal(tk, 'yellow_review', p.number)
-          );
         } else {
           benchCount++;
           let statusHtml = '';
@@ -2109,7 +1943,7 @@
             actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="promptRowSubOn('${tk}', ${p.number})">⬆️ Sub ON</button>`;
           } else if (p.status === 'tactical_off') {
             statusHtml = `<span class="status-tag tactical">Tactical Off</span>`;
-            actionHtml = `<button class="btn-action-small" style="border-color:#388bfd; color:#79c0ff;" onclick="promptRowSubOn('${tk}', ${p.number})" title="Law 3.33 Return">⬆️ Return</button>`;
+            actionHtml = `<button class="btn-action-small" style="border-color:#388bfd; color:#79c0ff;" onclick="promptRowSubOn('${tk}', ${p.number})" title="Law 3.33 Return (FR/Blood/HIA/Foul Play)">⬆️ Return</button>`;
           } else if (p.status === 'blood_bin') {
             statusHtml = `<span class="status-tag temp">🩸 Blood${timeStr}</span>`;
             actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="returnTempPlayerToPitch('${tk}', ${p.number})">↩ Return</button>`;
@@ -2117,21 +1951,10 @@
             statusHtml = `<span class="status-tag temp">🧠 HIA${timeStr}</span>`;
             actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="returnTempPlayerToPitch('${tk}', ${p.number})">↩ Return</button>`;
           } else if (p.status === 'sinbin') {
-            if (p.timerType === 'YellowReview') {
-              statusHtml = `<span class="status-tag review">🟨➔🟥 Review${timeStr}</span>`;
-              actionHtml = `<button class="btn-action-small" style="color:#f85149;" onclick="upgradeYellowToRed('${tk}', ${p.number})">🟥 Upgrade</button>
-                            <button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">End ✕</button>`;
-            } else {
-              statusHtml = `<span class="status-tag sinbin">🟨 Sin Bin${timeStr}</span>`;
-              actionHtml = `<button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">End ✕</button>`;
-            }
+            statusHtml = `<span class="status-tag sinbin">🟨 Sin Bin${timeStr}</span>`;
+            actionHtml = `<button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">End ✕</button>`;
           } else if (p.status === 'red_card') {
-            if (p.timerType === 'Red20' && p.timerSec > 0) {
-              statusHtml = `<span class="status-tag redcard">🟥 20m Red${timeStr}</span>`;
-              actionHtml = `<button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">Clear ✕</button>`;
-            } else {
-              statusHtml = `<span class="status-tag redcard">🟥 Sent Off</span>`;
-            }
+            statusHtml = `<span class="status-tag redcard">🟥 Sent Off</span>`;
           } else if (p.status === 'injured_off') {
             statusHtml = `<span class="status-tag injured">🏥 Injured Off</span>`;
           }
@@ -2225,10 +2048,6 @@
     function selectPaletteColor(hex) {
       applyColor(hex);
       closeModal('colorModal');
-    }
-
-    function selectCustomColor(hex) {
-      applyColor(hex);
     }
 
     function applyColor(hex) {
@@ -2344,9 +2163,7 @@
             const pill = document.createElement('div');
             let pillClass = 'sinbin';
             let icon = '🟨';
-            if (p.timerType === 'YellowReview') { pillClass = 'review'; icon = '🟨➔🟥'; }
-            else if (p.timerType === 'Red20') { pillClass = 'red20'; icon = '🟥20m'; }
-            else if (p.timerType === 'Blood') { pillClass = 'blood'; icon = '🩸'; }
+            if (p.timerType === 'Blood') { pillClass = 'blood'; icon = '🩸'; }
             else if (p.timerType === 'HIA') { pillClass = 'hia'; icon = '🧠'; }
 
             pill.className = `timer-pill ${pillClass}`;
@@ -2360,13 +2177,6 @@
                 <button class="btn-pill-small" style="color:#f85149;" onclick="cancelTimerEarly('${tk}', ${p.number})">✕</button>
               </div>
             `;
-            if (p.timerType === 'SinBin' || p.timerType === 'YellowReview') {
-              bindPressHold(
-                pill,
-                () => {},
-                () => upgradeYellowToRed(tk, p.number)
-              );
-            }
             c.appendChild(pill);
           }
         });
@@ -2701,18 +2511,6 @@
 
     window.addEventListener('pagehide', saveStateToStorage);
     window.addEventListener('beforeunload', saveStateToStorage);
-
-    /* Bind Press & Hold on Quick Yellow Card Buttons (Tap = Sin Bin, Hold = Bunker Review) */
-    bindPressHold(
-      document.getElementById('btnYellowHome'),
-      () => openCardIssueModal('home', 'yellow'),
-      () => openCardIssueModal('home', 'yellow_review')
-    );
-    bindPressHold(
-      document.getElementById('btnYellowAway'),
-      () => openCardIssueModal('away', 'yellow'),
-      () => openCardIssueModal('away', 'yellow_review')
-    );
 
     applyViewMode();
     applyLayoutMode();
