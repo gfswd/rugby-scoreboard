@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Rugby Referee Scoreboard</title>
+  
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Rugby Score">
+  <meta name="theme-color" content="#0d1117">
+
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Rugby%20Referee%20Scoreboard%22%2C%22short_name%22%3A%22RugbyScore%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%3E%3Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27100%27%20fill%3D%27%23161b22%27%2F%3E%3Ctext%20x%3D%2750%25%27%20y%3D%2755%25%27%20font-size%3D%27280%27%20text-anchor%3D%27middle%27%20dominant-baseline%3D%27middle%27%3E%F0%9F%8F%89%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --home-color: #388bfd;
+      --away-color: #f85149;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --accent: #238636;
+      --warning: #d29922;
+      --hia-color: #f0883e;
+      --blood-color: #f85149;
+      --card-yellow: #e3b341;
+      --card-red: #da3633;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    button { touch-action: manipulation; cursor: pointer; font-family: inherit; }
+
+    /* === TOAST NOTIFICATIONS (Non-blocking alerts) === */
+    .toast-container {
+      position: fixed;
+      top: 46px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 92%;
+      max-width: 460px;
+      pointer-events: none;
+    }
+    .toast-banner {
+      pointer-events: auto;
+      background: #1f2937;
+      border: 2px solid var(--card-yellow);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.75);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      animation: toastSlideIn 0.2s ease-out;
+    }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === HEADER === */
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      gap: 6px;
+      height: 42px;
+    }
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .period-badge {
+      background: #21262d; border: 1px solid var(--border); padding: 4px 10px;
+      border-radius: 14px; font-weight: bold; font-size: 0.8rem; cursor: pointer;
+      color: #58a6ff; white-space: nowrap;
+    }
+    .btn-header {
+      background: #21262d; border: 1px solid var(--border); color: var(--text);
+      padding: 4px 9px; border-radius: 6px; font-size: 0.76rem; font-weight: 600;
+      white-space: nowrap;
+    }
+    .btn-menu {
+      background: #21262d; border: 1px solid var(--border); color: #f0f6fc;
+      font-size: 1.15rem; padding: 2px 10px; border-radius: 6px; line-height: 1.2;
+    }
+
+    /* === MAIN SCOREBOARD CONTAINER === */
+    .scoreboard-container {
+      flex: 1; min-height: 0; display: grid; gap: 6px;
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 6px;
+      overflow: hidden;
+    }
+
+    /* Landscape View */
+    body.mode-landscape .scoreboard-container,
+    body.mode-auto:not(.is-portrait) .scoreboard-container {
+      grid-template-columns: 1fr minmax(200px, 230px) 1fr;
+      grid-template-rows: 1fr;
+    }
+    body.mode-landscape .team-panel.home, body.mode-auto:not(.is-portrait) .team-panel.home { order: 1; }
+    body.mode-landscape .center-panel, body.mode-auto:not(.is-portrait) .center-panel { order: 2; }
+    body.mode-landscape .team-panel.away, body.mode-auto:not(.is-portrait) .team-panel.away { order: 3; }
+
+    /* Portrait View */
+    body.mode-portrait, body.mode-auto.is-portrait { overflow: hidden; }
+    body.mode-portrait .scoreboard-container,
+    body.mode-auto.is-portrait .scoreboard-container {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      gap: 5px;
+      padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px)) 6px;
+    }
+    body.mode-portrait .team-panel.home, body.mode-auto.is-portrait .team-panel.home { order: 1; flex: 1.2; min-height: 0; }
+    body.mode-portrait .team-panel.away, body.mode-auto.is-portrait .team-panel.away { order: 2; flex: 1.2; min-height: 0; }
+    body.mode-portrait .center-panel, body.mode-auto.is-portrait .center-panel { order: 3; flex: 0.95; min-height: 0; }
+
+    /* === TEAM PANELS === */
+    .team-panel {
+      background: var(--card-bg); border-radius: 9px; border: 2px solid var(--border);
+      display: flex; flex-direction: column; padding: 5px 7px; min-height: 0; overflow: hidden;
+    }
+    .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; flex-shrink: 0; }
+    .team-name { font-size: 1.05rem; font-weight: 800; cursor: pointer; border-bottom: 1px dashed var(--text-muted); }
+    
+    .team-color-dot {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #f0f6fc;
+      cursor: pointer; box-shadow: 0 0 4px rgba(0,0,0,0.5);
+      flex-shrink: 0; transition: transform 0.1s;
+    }
+    .team-color-dot:active { transform: scale(0.9); }
+    .team-breakdown { font-size: 0.65rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    
+    .team-score-area {
+      flex: 1; min-height: 38px; display: flex; align-items: center; justify-content: center;
+      gap: 6px; position: relative; width: 100%; padding: 0;
+    }
+    .team-timers-list {
+      display: flex; flex-direction: column; gap: 2px; max-height: 100%;
+      overflow-y: auto; flex-shrink: 1; min-width: 0; max-width: 60%;
+    }
+    .team-timers-list:empty { display: none; }
+    .score-display {
+      flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center;
+      font-size: clamp(2.5rem, 6.8vh, 4.5rem); font-weight: 900; line-height: 1.05;
+      font-variant-numeric: tabular-nums; user-select: none;
+    }
+
+    /* === SCORING BUTTONS & PENALTY TRY + CORRECTION MENU BUTTON === */
+    .rugby-buttons { display: flex; flex-direction: column; gap: 3px; margin-top: auto; flex-shrink: 0; }
+    .try-row, .kicks-row { display: grid; gap: 3px; }
+    
+    .btn-score {
+      border: none; border-radius: 5px; padding: clamp(5px, 1.15vh, 8px) 2px;
+      font-weight: 800; font-size: clamp(0.84rem, 1.8vh, 1.05rem); color: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
+    }
+    .btn-score span { font-size: 0.56rem; font-weight: 500; opacity: 0.92; }
+    .home .btn-try { background: var(--home-team-bg, #1f6feb); color: var(--home-team-text, #fff); }
+    .home .btn-pt  { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); border: 1px solid rgba(255,255,255,0.25); }
+    .home .btn-sec { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); }
+    .away .btn-try { background: var(--away-team-bg, #da3633); color: var(--away-team-text, #fff); }
+    .away .btn-pt  { background: var(--away-team-sec, #b62324); color: var(--away-team-text, #fff); border: 1px solid rgba(255,255,255,0.25); }
+    .away .btn-sec { background: var(--away-team-sec, #b62324); color: var(--away-team-text, #fff); }
+
+    .btn-corr-menu {
+      width: 100%;
+      background: #21262d;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: clamp(3px, 0.8vh, 5px) 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .btn-corr-menu:active { background: #30363d; color: #f0f6fc; border-color: #8b949e; }
+
+    /* Full Mode Layout: Try (3fr) + Penalty Try (1.15fr) on top, 3 kicks below */
+    body.view-adult .try-row { grid-template-columns: 2.8fr 1.2fr; }
+    body.view-adult .try-row .btn-try {
+      font-size: clamp(1.0rem, 2.0vh, 1.22rem);
+      font-weight: 900;
+    }
+    body.view-adult .try-row .btn-pt {
+      font-size: clamp(0.82rem, 1.7vh, 0.98rem);
+      font-weight: 800;
+    }
+    body.view-adult .kicks-row { grid-template-columns: repeat(3, 1fr); }
+    body.view-adult .kicks-row .btn-sec {
+      padding: clamp(4px, 1.0vh, 7px) 2px;
+      font-size: clamp(0.76rem, 1.6vh, 0.9rem);
+    }
+
+    /* Youth Mode Layout: 4:1 Split Try + Conv */
+    body.view-youth .adult-only { display: none !important; }
+    body.view-youth .rugby-buttons { display: grid; grid-template-columns: 4fr 1.15fr; gap: 4px; }
+    body.view-youth .try-row { display: contents; }
+    body.view-youth .kicks-row { display: contents; }
+    body.view-youth .btn-try {
+      grid-column: 1;
+      padding: clamp(8px, 1.8vh, 13px) 5px;
+      font-size: clamp(1.1rem, 2.3vh, 1.35rem);
+      font-weight: 900;
+      border-radius: 6px;
+    }
+    body.view-youth .btn-sec {
+      grid-column: 2;
+      padding: clamp(8px, 1.8vh, 13px) 2px;
+      font-size: clamp(0.85rem, 1.8vh, 1.0rem);
+      font-weight: 700;
+      border-radius: 6px;
+    }
+    body.view-youth .btn-corr-menu {
+      grid-column: span 2;
+    }
+
+    /* === CENTER PANEL === */
+    .center-panel {
+      background: var(--card-bg); border-radius: 9px; border: 1px solid var(--border);
+      padding: 5px; display: flex; flex-direction: column; align-items: center;
+      justify-content: space-between; gap: 4px; min-height: 0; overflow: hidden;
+    }
+    .timer-wrap { display: flex; align-items: center; gap: 4px; width: 100%; justify-content: center; }
+    .timer-display {
+      font-size: clamp(1.8rem, 4vh, 2.3rem); font-weight: 900; font-family: monospace;
+      color: #58a6ff; cursor: pointer; padding: 1px 6px; background: #0d1117;
+      border-radius: 5px; border: 1px solid #30363d; user-select: none;
+    }
+    .timer-display.ended { color: #f85149; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .btn-time-step {
+      background: #21262d; border: 1px solid var(--border); color: var(--text);
+      font-size: 0.72rem; font-weight: bold; padding: 5px 6px; border-radius: 4px;
+    }
+    .timer-controls-row { width: 100%; display: flex; gap: 4px; align-items: stretch; }
+    .btn-timer-toggle {
+      flex: 1.25; background: var(--accent); color: #fff; border: none;
+      padding: 7px 4px; font-size: clamp(0.88rem, 1.9vh, 1.0rem); font-weight: 800;
+      border-radius: 5px; display: flex; align-items: center; justify-content: center;
+    }
+    .btn-timer-toggle.running { background: #da3633; }
+    .btn-end-half {
+      flex: 1; background: #21262d; border: 1px solid #d29922; color: #e3b341;
+      font-weight: 700; font-size: clamp(0.72rem, 1.6vh, 0.82rem); padding: 7px 3px;
+      border-radius: 5px; white-space: nowrap; display: flex; align-items: center; justify-content: center;
+    }
+    .btn-end-half:active { background: #d29922; color: #000; }
+
+    /* Quick Cards Panel */
+    .cards-quick-box {
+      width: 100%; background: #1b1913; border: 1px solid rgba(227, 179, 65, 0.4);
+      border-radius: 5px; padding: 4px 5px; display: flex; flex-direction: column; gap: 3px;
+    }
+    .cards-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.66rem; font-weight: bold; color: var(--card-yellow);
+    }
+    .cards-quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+    .btn-card-add {
+      background: #2a2412; border: 1px solid rgba(227, 179, 65, 0.5); color: #fce881;
+      padding: 4px 2px; border-radius: 4px; font-size: 0.68rem; font-weight: 700;
+    }
+
+    .btn-quick-note {
+      width: 100%; background: #0d1117; border: 1px dashed #30363d; border-radius: 5px;
+      color: var(--text-muted); font-size: 0.72rem; padding: 5px; text-align: center;
+    }
+    .btn-quick-note:active { border-color: #58a6ff; color: #f0f6fc; }
+
+    /* Timer Pills */
+    .timer-pill {
+      font-size: 0.64rem; padding: 2px 4px; border-radius: 4px; background: #161b22;
+      display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);
+      gap: 4px;
+    }
+    .timer-pill.sinbin { border-color: var(--card-yellow); background: rgba(227, 179, 65, 0.12); }
+    .timer-pill.blood { border-color: var(--blood-color); background: rgba(248, 81, 73, 0.12); }
+    .timer-pill.hia { border-color: var(--hia-color); background: rgba(240, 136, 62, 0.12); }
+    .timer-pill-adjust { display: flex; align-items: center; gap: 2px; }
+    .btn-pill-small {
+      background: #21262d; border: 1px solid var(--border); color: var(--text);
+      font-size: 0.6rem; padding: 1px 4px; border-radius: 3px;
+    }
+
+    /* === DRAWER MENU === */
+    .drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(2px); z-index: 200; display: none;
+    }
+    .drawer-overlay.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: -320px; width: 300px; height: 100%;
+      background: var(--card-bg); border-left: 1px solid var(--border);
+      z-index: 201; transition: right 0.25s ease-out; display: flex;
+      flex-direction: column; overflow-y: auto; padding: 16px 14px; gap: 14px;
+    }
+    .drawer.open { right: 0; }
+    .drawer-header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); padding-bottom: 8px;
+    }
+    .drawer-section-title {
+      font-size: 0.72rem; font-weight: 800; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+    .drawer-btn {
+      width: 100%; background: #21262d; border: 1px solid var(--border);
+      color: #f0f6fc; padding: 10px 12px; border-radius: 7px; font-size: 0.85rem;
+      font-weight: 600; text-align: left; display: flex; justify-content: space-between;
+      align-items: center; cursor: pointer; margin-bottom: 5px;
+    }
+    .drawer-btn:active { background: #30363d; }
+    .drawer-btn.danger { border-color: rgba(248,81,73,0.4); color: #f85149; }
+    .drawer-btn.danger:active { background: #da3633; color: #fff; }
+
+    /* Modals */
+    .modal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      z-index: 100; justify-content: center; align-items: center; padding: 12px;
+    }
+    .modal-content {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px; width: 100%; max-width: 520px; display: flex; flex-direction: column;
+      gap: 10px; max-height: 94vh; overflow-y: auto;
+    }
+    .modal-content-wide { max-width: 860px; }
+
+    /* Correction Modal Grid */
+    .corr-list { display: flex; flex-direction: column; gap: 6px; }
+    .btn-corr-option {
+      width: 100%; background: #21262d; border: 1px solid var(--border);
+      color: var(--text); padding: 10px 12px; border-radius: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.88rem; font-weight: 700;
+    }
+    .btn-corr-option:not(:disabled):active { background: #da3633; color: #fff; border-color: #f85149; }
+    .btn-corr-option:disabled { opacity: 0.38; cursor: not-allowed; }
+    .corr-badge {
+      font-size: 0.75rem; padding: 2px 8px; border-radius: 12px;
+      background: #0d1117; color: var(--text-muted); border: 1px solid var(--border);
+    }
+
+    .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 8px 0; }
+    .palette-item {
+      height: 42px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;
+      display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: bold;
+      color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); touch-action: auto;
+    }
+    .palette-item.active-color { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+
+    /* 3D Coin Toss */
+    .coin-wrap { perspective: 800px; display: flex; justify-content: center; align-items: center; margin: 12px 0; }
+    .coin-circle {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffe066, #d4a017 60%, #996515);
+      border: 4px solid #fff5a6; box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+      font-weight: 900; color: #3d2900; cursor: pointer; user-select: none;
+    }
+    .coin-circle.flipping { animation: coinSpin 0.9s ease-out forwards; }
+    @keyframes coinSpin { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(2160deg); } }
+    .toss-choice-btn {
+      flex: 1; padding: 8px; background: #21262d; border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 0.82rem; font-weight: bold;
+    }
+    .toss-choice-btn.selected { background: #d4a017; color: #000; border-color: #ffe066; }
+
+    /* === SUBSTITUTIONS MODAL (Law 3 + 3-Digit Custom Numbers) === */
+    .subs-team-tabs { display: flex; gap: 8px; }
+    .subs-tab-btn {
+      flex: 1; padding: 7px; background: #21262d; border: 1px solid var(--border);
+      color: var(--text-muted); border-radius: 6px; font-weight: bold; font-size: 0.82rem;
+    }
+    .subs-tab-btn.active { background: #1f6feb; color: #fff; border-color: #388bfd; }
+    .subs-tab-btn.away-tab.active { background: #da3633; border-color: #f85149; }
+
+    .quick-sub-bar {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      justify-content: space-between;
+    }
+    .quick-sub-inputs {
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap; flex: 1;
+    }
+    .input-jersey {
+      width: 58px; padding: 5px 4px; background: #161b22; border: 1px solid #30363d;
+      border-radius: 5px; color: #fff; font-weight: 800; font-family: monospace;
+      font-size: 0.9rem; text-align: center;
+    }
+    .select-sub-type {
+      background: #161b22; border: 1px solid #30363d; color: #f0f6fc;
+      padding: 5px 6px; border-radius: 5px; font-size: 0.78rem; font-weight: 600;
+    }
+
+    .subs-zones {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      max-height: 52vh; overflow-y: auto;
+    }
+    @media (max-width: 600px) {
+      .subs-zones { grid-template-columns: 1fr; max-height: 56vh; }
+    }
+    .zone-box {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px; display: flex; flex-direction: column; gap: 5px;
+    }
+    .zone-title {
+      font-size: 0.76rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; border-bottom: 1px solid #21262d; padding-bottom: 4px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .player-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #161b22; border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 6px; font-size: 0.78rem; gap: 4px;
+    }
+    .player-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .player-num {
+      font-weight: 900; font-family: monospace; font-size: 0.88rem;
+      min-width: 38px; padding: 2px 4px; text-align: center; color: #58a6ff;
+      background: #0d1117; border: 1px dashed #30363d; border-radius: 4px;
+      cursor: pointer; user-select: none;
+    }
+    .player-num:active { border-color: #58a6ff; background: #1f2937; }
+    .fr-badge {
+      font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: 800;
+      background: #21262d; color: var(--text-muted); border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .fr-badge.active { background: #1c2d42; color: #79c0ff; border-color: #388bfd; }
+    .player-actions { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+    .btn-action-small {
+      background: #21262d; border: 1px solid var(--border); color: var(--text);
+      font-size: 0.68rem; font-weight: 600; padding: 3px 5px; border-radius: 4px;
+    }
+    .status-tag {
+      font-size: 0.65rem; font-weight: 700; padding: 2px 5px; border-radius: 4px;
+    }
+    .status-tag.avail { color: #56d364; background: rgba(46, 160, 67, 0.15); }
+    .status-tag.tactical { color: #79c0ff; background: rgba(56, 139, 253, 0.15); }
+    .status-tag.injured { color: #8b949e; background: rgba(139, 148, 158, 0.15); }
+    .status-tag.sinbin { color: #e3b341; background: rgba(227, 179, 65, 0.15); }
+    .status-tag.redcard { color: #f85149; background: rgba(218, 54, 51, 0.2); }
+    .status-tag.temp { color: #f0883e; background: rgba(240, 136, 62, 0.18); }
+
+    .history-list {
+      display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto;
+      background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 8px;
+    }
+    .history-item { display: flex; justify-content: space-between; font-size: 0.82rem; border-bottom: 1px solid #21262d; padding: 4px 0; gap: 8px; }
+    .history-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body class="mode-auto view-adult">
+
+  <!-- Non-blocking Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- === HEADER === -->
+  <header>
+    <div class="header-left">
+      <button class="period-badge" id="periodBtn" onclick="togglePeriod()">1st Half</button>
+      <button class="btn-header" onclick="undoLast()">↩ Undo</button>
+      <button class="btn-header adult-only" onclick="openSubsModal()">🔄 Subs (<span id="activeTimersCount">0</span>)</button>
+    </div>
+    <div class="header-right">
+      <button class="btn-header" style="background:#238636; color:#fff;" onclick="openShareModal()">📤 Share</button>
+      <button class="btn-menu" onclick="openDrawer()" title="Menu">☰</button>
+    </div>
+  </header>
+
+  <!-- === SCOREBOARD GRID === -->
+  <div class="scoreboard-container" id="scoreboardContainer">
+    <!-- Home Panel -->
+    <div class="team-panel home">
+      <div class="team-header">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="team-name" id="homeName" onclick="editTeam('home')">Home</span>
+          <div class="team-color-dot" id="homeColorDot" onclick="openColorModal('home')" title="Change Color"></div>
+        </div>
+        <span class="team-breakdown adult-only" id="homeStats">0T 0PT 0C 0P 0D</span>
+      </div>
+      <div class="team-score-area">
+        <div class="team-timers-list" id="homeTimersList"></div>
+        <div class="score-display" id="homeScore">0</div>
+      </div>
+      <div class="rugby-buttons">
+        <div class="try-row">
+          <button class="btn-score btn-try" onclick="score('home', 5, 'Try', 't')">+5 <span>Try</span></button>
+          <button class="btn-score btn-pt adult-only" onclick="score('home', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
+        </div>
+        <div class="kicks-row">
+          <button class="btn-score btn-sec" onclick="score('home', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
+          <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
+          <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
+        </div>
+        <button class="btn-corr-menu" onclick="openCorrectionModal('home')">± Score Correction</button>
+      </div>
+    </div>
+
+    <!-- Center Control Panel -->
+    <div class="center-panel">
+      <div class="timer-wrap">
+        <button class="btn-time-step" onclick="adjustTime(-60)">-1m</button>
+        <div class="timer-display" id="timer" onclick="openTimeModal()">10:00</div>
+        <button class="btn-time-step" onclick="adjustTime(60)">+1m</button>
+      </div>
+      
+      <div class="timer-controls-row">
+        <button class="btn-timer-toggle" id="timerBtn" onclick="toggleTimer()">START</button>
+        <button class="btn-end-half" id="endHalfBtn" onclick="promptEndHalf()">🏁 End 1st Half</button>
+      </div>
+
+      <!-- Quick Cards Section -->
+      <div class="cards-quick-box">
+        <div class="cards-header">
+          <span>🟨 CARDS / DISCIPLINE</span>
+          <span id="defaultYellowDurationLabel" onclick="promptDefaultYellowDuration()" style="cursor:pointer; text-decoration:underline;">Dur: 10m ✎</span>
+        </div>
+        <div class="cards-quick-buttons">
+          <button class="btn-card-add" onclick="quickYellowCard('home')">+ 🟨 Home</button>
+          <button class="btn-card-add" onclick="quickYellowCard('away')">+ 🟨 Away</button>
+          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="quickRedCardPrompt('home')">+ 🟥 Home</button>
+          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="quickRedCardPrompt('away')">+ 🟥 Away</button>
+        </div>
+      </div>
+
+      <button class="btn-quick-note" onclick="openNotesModal()">📝 Match Notes & Incidents (<span id="notesCountBadge">0</span>)</button>
+    </div>
+
+    <!-- Away Panel -->
+    <div class="team-panel away">
+      <div class="team-header">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="team-name" id="awayName" onclick="editTeam('away')">Away</span>
+          <div class="team-color-dot" id="awayColorDot" onclick="openColorModal('away')" title="Change Color"></div>
+        </div>
+        <span class="team-breakdown adult-only" id="awayStats">0T 0PT 0C 0P 0D</span>
+      </div>
+      <div class="team-score-area">
+        <div class="team-timers-list" id="awayTimersList"></div>
+        <div class="score-display" id="awayScore">0</div>
+      </div>
+      <div class="rugby-buttons">
+        <div class="try-row">
+          <button class="btn-score btn-try" onclick="score('away', 5, 'Try', 't')">+5 <span>Try</span></button>
+          <button class="btn-score btn-pt adult-only" onclick="score('away', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
+        </div>
+        <div class="kicks-row">
+          <button class="btn-score btn-sec" onclick="score('away', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
+          <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
+          <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
+        </div>
+        <button class="btn-corr-menu" onclick="openCorrectionModal('away')">± Score Correction</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- === OFF-CANVAS SLIDE-IN MENU === -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h3 style="font-size:1.1rem; color:#58a6ff;">🏉 Match Menu</h3>
+      <button class="btn-pill-small" style="font-size:0.9rem;" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div>
+      <div class="drawer-section-title">Pre-Match & Law 6</div>
+      <button class="drawer-btn" onclick="closeDrawer(); openTossModal();">🪙 Coin Toss (Law 6) <span>➔</span></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openColorModal('home');">🎨 Home Team Color <span>➔</span></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openColorModal('away');">🎨 Away Team Color <span>➔</span></button>
+    </div>
+
+    <div>
+      <div class="drawer-section-title">Timeline & Logs</div>
+      <button class="drawer-btn" onclick="closeDrawer(); openHistoryModal();">📜 Match Timeline (<span id="histCount">0</span>) <span>➔</span></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openNotesModal();">📝 Edit Match Notes <span>➔</span></button>
+      <button class="drawer-btn adult-only" onclick="closeDrawer(); openSubsModal();">🔄 Subs & Cards (Law 3) <span>➔</span></button>
+    </div>
+
+    <div>
+      <div class="drawer-section-title">Settings & View</div>
+      <button class="drawer-btn" onclick="toggleViewMode();">🏉 Mode: <strong id="menuViewLabel">Full</strong></button>
+      <button class="drawer-btn" onclick="cycleLayoutMode();">📱 Orientation: <strong id="menuLayoutLabel">Auto</strong></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openTimeModal();">⏱ Set Half Duration <span>➔</span></button>
+      <button class="drawer-btn" id="drawerInstallBtn" onclick="triggerPwaInstall();">📲 Install as App <span>➔</span></button>
+    </div>
+
+    <div style="margin-top:auto;">
+      <button class="drawer-btn danger" onclick="closeDrawer(); promptResetAll();">⚠️ New Match (Reset All)</button>
+    </div>
+  </div>
+
+  <!-- Modal: Score Correction Menu (All Scoring Variants) -->
+  <div class="modal" id="correctionModal">
+    <div class="modal-content" style="max-width: 390px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 id="corrModalTitle" style="color:#f85149; font-size:1.0rem;">± Score Correction</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem; padding:2px 7px;" onclick="closeModal('correctionModal')">✕</button>
+      </div>
+      <p style="font-size:0.76rem; color:var(--text-muted);">
+        Select which score type to deduct from <strong id="corrTeamNameLabel" style="color:#fff;">Team</strong>:
+      </p>
+      <div class="corr-list" id="corrOptionsList"></div>
+      <button class="btn-header" style="margin-top:4px; padding:8px;" onclick="closeModal('correctionModal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Modal: Coin Toss (Law 6.3) -->
+  <div class="modal" id="tossModal">
+    <div class="modal-content" style="max-width: 420px; text-align: center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 style="color:#fce881; font-size:1.05rem;">🪙 Coin Toss (World Rugby Law 6.3)</h3>
+        <button class="btn-pill-small" onclick="closeModal('tossModal')">✕</button>
+      </div>
+
+      <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-top:4px;">
+        <span style="font-weight:bold; color:#f0f6fc;">Away Captain calls:</span> Heads or Tails:
+      </div>
+      <div style="display:flex; gap:8px; margin-top:2px;">
+        <button class="toss-choice-btn selected" id="callHeadsBtn" onclick="selectTossCall('Heads')">🟡 Heads</button>
+        <button class="toss-choice-btn" id="callTailsBtn" onclick="selectTossCall('Tails')">⚪ Tails</button>
+      </div>
+
+      <div class="coin-wrap">
+        <div class="coin-circle" id="coinVisual" onclick="flipCoin()">HEADS</div>
+      </div>
+
+      <button class="btn-header" id="flipBtn" style="background:#238636; color:#fff; padding:8px 16px; font-weight:bold; width:100%; font-size:0.95rem;" onclick="flipCoin()">🪙 Flip Coin</button>
+
+      <div id="tossResultBox" style="display:none; background:#0d1117; border:1px solid #d4a017; border-radius:8px; padding:10px; margin-top:8px;">
+        <div id="tossResultText" style="font-size:1.15rem; font-weight:900; color:#fce881;">HEADS</div>
+        <div id="tossWinnerText" style="font-size:0.95rem; font-weight:bold; color:#58a6ff; margin-bottom:8px;">Winner: Away</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+          <button class="btn-header" style="background:#1f6feb; color:#fff; font-size:0.75rem; padding:8px 4px;" onclick="selectTossDecision('Kick-off')">🏉 Elects Kick-off</button>
+          <button class="btn-header" style="background:#238636; color:#fff; font-size:0.75rem; padding:8px 4px;" onclick="selectTossDecision('End')">↔ Elects End</button>
+        </div>
+      </div>
+      <button class="btn-header" style="margin-top:6px;" onclick="closeModal('tossModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal: Notes & Incidents -->
+  <div class="modal" id="notesModal">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:#58a6ff;">📝 Match Incidents & Notes</h3>
+        <button class="btn-pill-small" onclick="closeModal('notesModal')">✕</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-header" onclick="appendTimestampToComment()">⏱ Insert Timestamp</button>
+        <button class="btn-header" onclick="clearComment()">Clear</button>
+      </div>
+      <textarea id="matchComment" style="width:100%; height:130px; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#f0f6fc; font-family:inherit; padding:8px; resize:none;" placeholder="Cards rationale, injuries, disciplinary notes..." oninput="saveComment()"></textarea>
+      <button class="btn-header" style="background:#238636; color:#fff;" onclick="closeModal('notesModal')">Save & Close</button>
+    </div>
+  </div>
+
+  <!-- Modal: End Half / Full Time -->
+  <div class="modal" id="endHalfModal">
+    <div class="modal-content" style="max-width: 360px; text-align: center;">
+      <div style="font-size: 2.2rem;">🏁</div>
+      <h3 id="endHalfModalTitle" style="color:#e3b341; margin-bottom: 6px;">End Period?</h3>
+      <p id="endHalfModalDesc" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;"></p>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-header" style="flex: 1; padding: 10px;" onclick="closeModal('endHalfModal')">Resume</button>
+        <button class="btn-header" style="flex: 1; padding: 10px; background: #d29922; color: #000; font-weight: bold;" onclick="confirmEndHalf()">Yes, Blow Whistle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: New Match Confirmation -->
+  <div class="modal" id="resetModal">
+    <div class="modal-content" style="max-width: 360px; text-align: center;">
+      <div style="font-size: 2.4rem;">⚠️</div>
+      <h3 style="color:#f85149; margin-bottom: 6px;">Start New Match?</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
+        Are you sure? Scores, team names, colors, timers, and incident notes will be reset to default.
+      </p>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-header" style="flex: 1; padding: 10px;" onclick="closeModal('resetModal')">Cancel</button>
+        <button class="btn-header" style="flex: 1; padding: 10px; background: #da3633; color: #fff; font-weight: bold;" onclick="confirmResetAll()">Yes, Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Match Time -->
+  <div class="modal" id="timeModal">
+    <div class="modal-content">
+      <h3 style="color:#58a6ff;">Set Match Time</h3>
+      <div style="display:flex; justify-content:center; gap:8px;">
+        <input type="number" id="modalMin" value="10" min="0" max="90" style="width:70px; font-size:1.5rem; text-align:center; background:#0d1117; color:#fff; border:1px solid #30363d; border-radius:6px;">
+        <span style="font-size:1.5rem;">:</span>
+        <input type="number" id="modalSec" value="00" min="0" max="59" step="5" style="width:70px; font-size:1.5rem; text-align:center; background:#0d1117; color:#fff; border:1px solid #30363d; border-radius:6px;">
+      </div>
+      <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">
+        <button class="btn-header" onclick="setModalMin(7, 2)">7m (7s • 2m 🟨)</button>
+        <button class="btn-header" onclick="setModalMin(10, 2)">10m (10s/Youth)</button>
+        <button class="btn-header" onclick="setModalMin(12, 5)">12m</button>
+        <button class="btn-header" onclick="setModalMin(35, 10)">35m (U19)</button>
+        <button class="btn-header" onclick="setModalMin(40, 10)">40m (Adult)</button>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="btn-header" style="flex:1;" onclick="closeModal('timeModal')">Cancel</button>
+        <button class="btn-header" style="flex:1; background:#238636; color:#fff;" onclick="saveTimeModal()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: History -->
+  <div class="modal" id="histModal">
+    <div class="modal-content">
+      <h3 style="color:#58a6ff;">📜 Match Timeline</h3>
+      <div class="history-list" id="histList"></div>
+      <button class="btn-header" onclick="closeModal('histModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal: Substitutions & Discipline (Law 3 + 1-3 Digit Custom Jersey Support) -->
+  <div class="modal" id="subsModal">
+    <div class="modal-content modal-content-wide">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:#d2a8ff; font-size:1.0rem;">🔄 Substitutions & Discipline (Law 3)</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem; padding:2px 7px;" onclick="closeModal('subsModal')">✕</button>
+      </div>
+
+      <div class="subs-team-tabs">
+        <button class="subs-tab-btn active" id="tabHomeBtn" onclick="switchSubsTeam('home')">Home (<span id="homeSubsUsed">0</span>/8)</button>
+        <button class="subs-tab-btn away-tab" id="tabAwayBtn" onclick="switchSubsTeam('away')">Away (<span id="awaySubsUsed">0</span>/8)</button>
+      </div>
+
+      <!-- Quick Sub Bar: Supports any 1-3 digit jersey numbers (1-999) -->
+      <div class="quick-sub-bar">
+        <div class="quick-sub-inputs">
+          <span style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">Off #</span>
+          <input type="number" id="quickOffNum" class="input-jersey" placeholder="e.g. 10" min="1" max="999">
+          <span style="font-size:0.78rem; color:#58a6ff; font-weight:900;">➔ On #</span>
+          <input type="number" id="quickOnNum" class="input-jersey" placeholder="e.g. 124" min="1" max="999">
+          <select id="quickSubReason" class="select-sub-type">
+            <option value="Tactical">Tactical Sub</option>
+            <option value="Injury">Injury (Permanent)</option>
+            <option value="Blood">🩸 Blood Bin (15m Actual)</option>
+            <option value="HIA">🧠 HIA (12m Actual)</option>
+            <option value="FrontRow">Front Row Rep.</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:5px;">
+          <button class="btn-header" style="background:#238636; color:#fff; padding:6px 10px;" onclick="executeQuickSub()">✓ Sub</button>
+          <button class="btn-header" style="background:#1c2d42; border-color:#388bfd; color:#79c0ff; padding:6px 8px;" onclick="promptAddCustomPlayer()" title="Add custom 1-3 digit jersey number">+ Add #</button>
+        </div>
+      </div>
+
+      <div style="font-size:0.68rem; color:var(--text-muted); margin-top:-4px;">
+        💡 Tip: Tap any <strong>#number</strong> below to edit its jersey number (1–999). Blood & HIA timers run in continuous <em>actual time</em> (Law 3.25/3.27).
+      </div>
+
+      <div class="subs-zones">
+        <div class="zone-box">
+          <div class="zone-title">
+            <span>Active on Pitch (<span id="pitchCountLabel">15</span>)</span>
+            <span>Actions</span>
+          </div>
+          <div id="fieldPlayersList" style="display:flex; flex-direction:column; gap:4px;"></div>
+        </div>
+        <div class="zone-box">
+          <div class="zone-title">
+            <span>Bench / Off-Pitch (<span id="benchCountLabel">8</span>)</span>
+            <span>Status & Return</span>
+          </div>
+          <div id="benchPlayersList" style="display:flex; flex-direction:column; gap:4px;"></div>
+        </div>
+      </div>
+      <button class="btn-header" onclick="closeModal('subsModal')">Close</button>
+    </div>
+  </div>
+
+  <!-- Modal: Team Color Picker -->
+  <div class="modal" id="colorModal">
+    <div class="modal-content" style="max-width: 440px;">
+      <h3 id="colorModalTitle" style="color:#58a6ff;">Choose Team Color</h3>
+      <div class="palette-grid" id="paletteGrid"></div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#0d1117; border:1px solid var(--border); padding:8px 12px; border-radius:8px;">
+        <span style="font-size:0.85rem; font-weight:600;">Custom Hex Color:</span>
+        <input type="color" id="customColorInput" style="width:36px; height:32px; border:none; background:none; cursor:pointer;" onchange="applyColor(this.value)" oninput="applyColor(this.value)">
+      </div>
+
+      <button class="btn-header" onclick="closeModal('colorModal')">Done</button>
+    </div>
+  </div>
+
+  <!-- Modal: Share Report -->
+  <div class="modal" id="shareModal">
+    <div class="modal-content">
+      <h3 style="color:#2ea043;">📤 Share Match Report</h3>
+      <div style="max-height: 55vh; overflow-y: auto; border: 1px solid #30363d; border-radius: 8px;">
+        <canvas id="shareCanvas" width="900" height="780" style="width:100%; display:block; border-radius:6px;"></canvas>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top: 4px;">
+        <button class="btn-header" style="background:#238636; color:#fff;" onclick="shareImage()">📲 Share Image</button>
+        <button class="btn-header" style="background:#128c7e; color:#fff;" onclick="shareWhatsAppText()">💬 WhatsApp Text</button>
+        <button class="btn-header" onclick="downloadImage()">💾 Save Image</button>
+        <button class="btn-header" onclick="copyShareText()">📋 Copy Text</button>
+      </div>
+      <button class="btn-header" onclick="closeModal('shareModal')">Close</button>
+    </div>
+  </div>
+
+  <script>
+    function generateSquad() {
+      const squad = [];
+      for (let i = 1; i <= 23; i++) {
+        squad.push({
+          number: i,
+          position: i <= 15 ? `Player ${i}` : "Reserve",
+          isFrontRow: (i >= 1 && i <= 3) || (i >= 16 && i <= 18),
+          status: i <= 15 ? "field" : "bench",
+          timerSec: 0,
+          timerType: null,
+          replacedBy: null,
+          yellowCount: 0
+        });
+      }
+      return squad;
+    }
+
+    let state = {
+      homeName: "Home", awayName: "Away",
+      homeColor: "#388bfd", awayColor: "#f85149",
+      homeScore: 0, awayScore: 0,
+      homeStats: { t: 0, pt: 0, c: 0, p: 0, d: 0 },
+      awayStats: { t: 0, pt: 0, c: 0, p: 0, d: 0 },
+      periodIdx: 0,
+      secondsLeft: 600,
+      initialSeconds: 600,
+      halfDurationSeconds: 600,
+      isRunning: false,
+      hasStarted: false,
+      isPaused: false,
+      pauseSeconds: 0,
+      history: [],
+      comment: "",
+      currentSubsTeam: "home",
+      homeSubsCount: 0,
+      awaySubsCount: 0,
+      defaultYellowMinutes: 10,
+      layoutMode: localStorage.getItem('rugby_layout_mode') || 'auto',
+      viewMode: localStorage.getItem('rugby_view_mode') || 'adult',
+      tossCall: 'Heads',
+      tossWinner: null,
+      squads: { home: generateSquad(), away: generateSquad() }
+    };
+
+    let timerInterval = null;
+    let pauseInterval = null;
+    let lastTickMs = Date.now();
+    let lastPauseTickMs = Date.now();
+    let audioCtx = null;
+    let audioUnlocked = false;
+    let deferredPrompt = null;
+    let currentColorTarget = 'home';
+    let currentCorrectionTeam = 'home';
+    let pendingTimeModalYellowMin = null;
+    const STORAGE_KEY = 'rugby_match_state_v1';
+    const periods = ["1st Half", "2nd Half", "Full Time"];
+
+    const standardColors = [
+      { name: "Blue", hex: "#388bfd" }, { name: "Navy", hex: "#0969da" },
+      { name: "Sky Blue", hex: "#79c0ff" }, { name: "Red", hex: "#f85149" },
+      { name: "Dark Red", hex: "#cf222e" }, { name: "Green", hex: "#2ea043" },
+      { name: "Dark Green", hex: "#196c2e" }, { name: "Yellow", hex: "#f1e05a" },
+      { name: "Gold", hex: "#d29922" }, { name: "Orange", hex: "#f0883e" },
+      { name: "Purple", hex: "#a371f7" }, { name: "White", hex: "#ffffff" },
+      { name: "Light Grey", hex: "#8b949e" }, { name: "Dark Grey", hex: "#484f58" },
+      { name: "Teal", hex: "#39c5cf" }
+    ];
+
+    /* === iOS / Mobile Audio Unlocker === */
+    function unlockAudioContext() {
+      if (audioUnlocked) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        if (source.start) source.start(0);
+        audioUnlocked = true;
+      } catch (e) {}
+    }
+    window.addEventListener('touchstart', unlockAudioContext, { once: true, passive: true });
+    window.addEventListener('click', unlockAudioContext, { once: true, passive: true });
+
+    /* === Non-Blocking Toast Notification System === */
+    function showToast(message, borderColor = '#e3b341', durationMs = 10000) {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = 'toast-banner';
+      toast.style.borderColor = borderColor;
+      toast.innerHTML = `
+        <span>${message}</span>
+        <button class="btn-pill-small" style="padding:3px 7px; font-size:0.75rem;" onclick="this.parentElement.remove()">OK</button>
+      `;
+      container.appendChild(toast);
+      if (navigator.vibrate) {
+        try { navigator.vibrate([250, 120, 250]); } catch (e) {}
+      }
+      if (durationMs > 0) {
+        setTimeout(() => { if (toast.parentElement) toast.remove(); }, durationMs);
+      }
+    }
+
+    /* Drawer */
+    function openDrawer() {
+      document.getElementById('drawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('open');
+      document.getElementById('menuViewLabel').textContent = state.viewMode === 'adult' ? 'Full' : 'Youth';
+      document.getElementById('menuLayoutLabel').textContent = 
+        state.layoutMode === 'landscape' ? 'Landscape' : (state.layoutMode === 'portrait' ? 'Portrait' : 'Auto');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawer').classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('open');
+    }
+
+    function openNotesModal() {
+      document.getElementById('notesModal').style.display = 'flex';
+    }
+
+    /* PWA */
+    function isRunningStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
+    function updateInstallButtonVisibility() {
+      const btn = document.getElementById('drawerInstallBtn');
+      if (!btn) return;
+      btn.style.display = isRunningStandalone() ? 'none' : 'flex';
+    }
+
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+      const swCode = `
+        const CACHE = 'rugby-clean-v5';
+        self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll([location.href]))));
+        self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+      `;
+      navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: 'application/javascript' }))).catch(() => {});
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      updateInstallButtonVisibility();
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      updateInstallButtonVisibility();
+    });
+
+    function triggerPwaInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => { deferredPrompt = null; updateInstallButtonVisibility(); });
+      } else {
+        showToast("Tap your browser menu (⋮ or Share) and select 'Add to Home Screen'.", "#58a6ff", 7000);
+      }
+    }
+
+    /* Modes */
+    function toggleViewMode() {
+      state.viewMode = state.viewMode === 'adult' ? 'youth' : 'adult';
+      localStorage.setItem('rugby_view_mode', state.viewMode);
+      if (state.viewMode === 'youth' && state.defaultYellowMinutes > 5) state.defaultYellowMinutes = 5;
+      else if (state.viewMode === 'adult' && state.defaultYellowMinutes < 10) state.defaultYellowMinutes = 10;
+      applyViewMode();
+      render();
+      document.getElementById('menuViewLabel').textContent = state.viewMode === 'adult' ? 'Full' : 'Youth';
+    }
+
+    function applyViewMode() {
+      if (state.viewMode === 'youth') {
+        document.body.classList.remove('view-adult');
+        document.body.classList.add('view-youth');
+      } else {
+        document.body.classList.remove('view-youth');
+        document.body.classList.add('view-adult');
+      }
+    }
+
+    /* === World Rugby Law 3 & Law 9 Timer Engine (Playing Time vs. Actual Time) === */
+    function tickPlayerTimers(deltaSec, includePlayingTimeSinBin) {
+      if (deltaSec <= 0) return;
+      ['home', 'away'].forEach(teamKey => {
+        const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+        state.squads[teamKey].forEach(p => {
+          if (p.timerSec > 0) {
+            const isSinBin = p.timerType === 'SinBin';
+            // SinBin only ticks during Playing Time; Blood & HIA tick in continuous Actual Time (Law 3.25 / 3.27)
+            if (isSinBin && !includePlayingTimeSinBin) return;
+
+            p.timerSec = Math.max(0, p.timerSec - deltaSec);
+            if (p.timerSec === 0) {
+              const expiredType = p.timerType;
+              triggerAirhornShort3();
+              if (expiredType === 'SinBin') {
+                p.status = 'field';
+                p.timerType = null;
+                showToast(`⏱ SIN BIN ENDED: ${teamLabel} #${p.number} may return to the pitch!`, '#e3b341', 12000);
+              } else if (expiredType === 'Blood') {
+                // Law 3.25: If not returned within 15m actual time, replacement becomes permanent
+                p.status = 'injured_off';
+                p.timerType = null;
+                p.replacedBy = null;
+                if (teamKey === 'home') state.homeSubsCount++;
+                else state.awaySubsCount++;
+                showToast(`🩸 BLOOD BIN (15m) EXPIRED: ${teamLabel} #${p.number} replacement is now PERMANENT (Law 3.25).`, '#f85149', 14000);
+              } else if (expiredType === 'HIA') {
+                // Law 3.27b: If not returned within 12m actual time, replacement becomes permanent
+                p.status = 'injured_off';
+                p.timerType = null;
+                p.replacedBy = null;
+                if (teamKey === 'home') state.homeSubsCount++;
+                else state.awaySubsCount++;
+                showToast(`🧠 HIA (12m) EXPIRED: ${teamLabel} #${p.number} replacement is now PERMANENT (Law 3.27b).`, '#f0883e', 14000);
+              }
+            }
+          }
+        });
+      });
+
+      if (document.getElementById('subsModal').style.display === 'flex') {
+        renderSubsModal();
+      }
+    }
+
+    function advanceTimersBy(deltaSec) {
+      if (deltaSec <= 0) return;
+      const prevSec = state.secondsLeft;
+      state.secondsLeft -= deltaSec;
+
+      if (prevSec > 0 && state.secondsLeft <= 0) {
+        triggerAirhorn();
+        showToast(`⏰ TIME UP (${periods[state.periodIdx]})!`, '#f85149', 8000);
+      } else if (state.secondsLeft < 0) {
+        const prevOver = Math.floor(Math.abs(Math.min(0, prevSec)) / 30);
+        const curOver = Math.floor(Math.abs(state.secondsLeft) / 30);
+        if (curOver > prevOver) triggerAirhornShort3();
+      }
+
+      tickPlayerTimers(deltaSec, true);
+    }
+
+    function advancePauseBy(deltaSec) {
+      if (deltaSec <= 0) return;
+      const prevBlocks = Math.floor((state.pauseSeconds || 0) / 30);
+      state.pauseSeconds = (state.pauseSeconds || 0) + deltaSec;
+      const curBlocks = Math.floor(state.pauseSeconds / 30);
+      if (curBlocks > prevBlocks) triggerAirhornShort3();
+
+      // Law 3.25 & 3.27b: Blood Bin (15m) and HIA (12m) run in continuous Actual Time even during stoppages!
+      tickPlayerTimers(deltaSec, false);
+    }
+
+    function startTimerLoop() {
+      clearInterval(timerInterval);
+      lastTickMs = Date.now();
+      timerInterval = setInterval(() => {
+        const now = Date.now();
+        const deltaSec = Math.floor((now - lastTickMs) / 1000);
+        if (deltaSec >= 1) {
+          lastTickMs += deltaSec * 1000;
+          advanceTimersBy(deltaSec);
+          render();
+        }
+      }, 250);
+    }
+
+    function startPauseLoop() {
+      clearInterval(pauseInterval);
+      lastPauseTickMs = Date.now();
+      pauseInterval = setInterval(() => {
+        const now = Date.now();
+        const deltaSec = Math.floor((now - lastPauseTickMs) / 1000);
+        if (deltaSec >= 1) {
+          lastPauseTickMs += deltaSec * 1000;
+          advancePauseBy(deltaSec);
+          render();
+        }
+      }, 250);
+    }
+
+    function saveStateToStorage() {
+      try {
+        const activeRefMs = state.isRunning ? lastTickMs : (state.isPaused ? lastPauseTickMs : Date.now());
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, lastActiveTimestamp: activeRefMs }));
+      } catch (e) {}
+    }
+
+    function loadStateFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const saved = JSON.parse(raw);
+        if (!saved || typeof saved !== 'object') return false;
+
+        Object.assign(state, saved);
+        if (!state.halfDurationSeconds) state.halfDurationSeconds = state.initialSeconds || 600;
+        if (!state.homeStats) state.homeStats = { t: 0, pt: 0, c: 0, p: 0, d: 0 };
+        if (typeof state.homeStats.pt !== 'number') state.homeStats.pt = 0;
+        if (!state.awayStats) state.awayStats = { t: 0, pt: 0, c: 0, p: 0, d: 0 };
+        if (typeof state.awayStats.pt !== 'number') state.awayStats.pt = 0;
+        if (!state.squads || !Array.isArray(state.squads.home) || !Array.isArray(state.squads.away)) {
+          state.squads = { home: generateSquad(), away: generateSquad() };
+        }
+        
+        const commentArea = document.getElementById('matchComment');
+        if (commentArea && state.comment) commentArea.value = state.comment;
+
+        const now = Date.now();
+        const refMs = saved.lastActiveTimestamp || now;
+        const diffSec = Math.max(0, Math.floor((now - refMs) / 1000));
+
+        if (state.isRunning) {
+          if (diffSec > 0) advanceTimersBy(diffSec);
+          startTimerLoop();
+        } else if (state.isPaused && state.hasStarted) {
+          if (diffSec > 0) advancePauseBy(diffSec);
+          startPauseLoop();
+        }
+        return true;
+      } catch (e) { return false; }
+    }
+
+    function toggleTimer() {
+      unlockAudioContext();
+      if (state.isRunning) {
+        clearInterval(timerInterval);
+        state.isRunning = false;
+        if (state.hasStarted) {
+          state.isPaused = true;
+          state.pauseSeconds = 0;
+          startPauseLoop();
+        }
+      } else {
+        state.isRunning = true;
+        state.hasStarted = true;
+        state.isPaused = false;
+        clearInterval(pauseInterval);
+        state.pauseSeconds = 0;
+        startTimerLoop();
+      }
+      saveStateToStorage();
+      render();
+    }
+
+    function adjustTime(delta) {
+      state.secondsLeft = Math.max(0, state.secondsLeft + delta);
+      if (!state.hasStarted && state.periodIdx === 0) {
+        state.initialSeconds = state.secondsLeft;
+        state.halfDurationSeconds = state.secondsLeft;
+      }
+      render();
+    }
+
+    function togglePeriod() {
+      const nextIdx = (state.periodIdx + 1) % periods.length;
+      state.periodIdx = nextIdx;
+      if (nextIdx === 1 && !state.isRunning) {
+        state.initialSeconds = state.halfDurationSeconds || state.initialSeconds;
+        state.secondsLeft = state.initialSeconds;
+        state.hasStarted = false;
+        state.isPaused = false;
+        clearInterval(pauseInterval);
+      }
+      render();
+    }
+
+    function promptEndHalf() {
+      if (state.periodIdx === 0) {
+        document.getElementById('endHalfModalTitle').textContent = "End 1st Half?";
+        document.getElementById('endHalfModalDesc').textContent = `Blow half-time whistle? (${state.homeName} ${state.homeScore} : ${state.awayScore} ${state.awayName})`;
+        document.getElementById('endHalfModal').style.display = 'flex';
+      } else if (state.periodIdx === 1) {
+        document.getElementById('endHalfModalTitle').textContent = "End Match (Full Time)?";
+        document.getElementById('endHalfModalDesc').textContent = `Final Score: ${state.homeName} ${state.homeScore} : ${state.awayScore} ${state.awayName}`;
+        document.getElementById('endHalfModal').style.display = 'flex';
+      } else {
+        promptResetAll();
+      }
+    }
+
+    function confirmEndHalf() {
+      closeModal('endHalfModal');
+      clearInterval(timerInterval);
+      clearInterval(pauseInterval);
+      state.isRunning = false;
+      state.isPaused = false;
+      triggerAirhorn();
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      const p = periods[state.periodIdx];
+
+      if (state.periodIdx === 0) {
+        state.history.push({
+          actionType: 'period',
+          team: 'system', teamName: 'Referee', val: 0,
+          type: `Half-time Whistle (${state.homeName} ${state.homeScore}:${state.awayScore} ${state.awayName})`,
+          period: p, time: `${min}'`, hScore: state.homeScore, aScore: state.awayScore
+        });
+        state.periodIdx = 1;
+        state.initialSeconds = state.halfDurationSeconds || 600;
+        state.secondsLeft = state.initialSeconds;
+        state.hasStarted = false;
+      } else if (state.periodIdx === 1) {
+        state.history.push({
+          actionType: 'period',
+          team: 'system', teamName: 'Referee', val: 0,
+          type: `Full-time Whistle (Final: ${state.homeName} ${state.homeScore}:${state.awayScore} ${state.awayName})`,
+          period: p, time: `${min}'`, hScore: state.homeScore, aScore: state.awayScore
+        });
+        state.periodIdx = 2;
+      }
+      render();
+    }
+
+    /* === Scoring, Penalty Try (Law 8.3) & Dedicated Correction Menu === */
+    function score(team, val, type, explicitStatKey = null) {
+      const currentScore = team === 'home' ? state.homeScore : state.awayScore;
+      if (val < 0 && currentScore <= 0) {
+        showToast("Score is already 0.", "#8b949e", 2500);
+        return;
+      }
+
+      const stats = team === 'home' ? state.homeStats : state.awayStats;
+      let statKey = explicitStatKey;
+      let statDelta = val > 0 ? 1 : -1;
+
+      if (!statKey) {
+        if (Math.abs(val) === 5) statKey = 't';
+        else if (Math.abs(val) === 7) statKey = 'pt';
+        else if (Math.abs(val) === 2) statKey = 'c';
+        else if (Math.abs(val) === 3 && type.includes('Penalty')) statKey = 'p';
+        else if (Math.abs(val) === 3) statKey = 'd';
+      }
+
+      if (statKey && typeof stats[statKey] === 'number') {
+        if (val < 0 && stats[statKey] <= 0) {
+          showToast(`No ${type} recorded to deduct.`, "#e3b341", 3000);
+          return;
+        }
+        stats[statKey] = Math.max(0, stats[statKey] + statDelta);
+      }
+
+      const newScore = Math.max(0, currentScore + val);
+      const actualValDelta = newScore - currentScore;
+      if (team === 'home') state.homeScore = newScore;
+      else state.awayScore = newScore;
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      state.history.push({
+        actionType: 'score',
+        team,
+        teamName: team === 'home' ? state.homeName : state.awayName,
+        val: actualValDelta,
+        statKey,
+        statDelta,
+        type: val < 0 ? `Corr. ${type} (${val})` : `${type} (+${val})`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+
+      // Law 8.3 Reminder on Penalty Try
+      if (val === 7 && statKey === 'pt') {
+        const oppLabel = team === 'home' ? state.awayName : state.homeName;
+        showToast(`🏉 PENALTY TRY (+7)! Law 8.3: No conversion. Remember to issue 🟨 or 🟥 to offending ${oppLabel} player!`, '#e3b341', 9000);
+      }
+
+      render();
+    }
+
+    function openCorrectionModal(teamKey) {
+      currentCorrectionTeam = teamKey;
+      const teamName = teamKey === 'home' ? state.homeName : state.awayName;
+      const stats = teamKey === 'home' ? state.homeStats : state.awayStats;
+
+      document.getElementById('corrModalTitle').textContent = `± Score Correction (${teamName})`;
+      document.getElementById('corrTeamNameLabel').textContent = teamName;
+
+      const variants = [
+        { label: '-5  Try', val: -5, name: 'Try', key: 't', count: stats.t, adultOnly: false },
+        { label: '-7  Penalty Try (PT)', val: -7, name: 'Penalty Try', key: 'pt', count: stats.pt || 0, adultOnly: true },
+        { label: '-2  Conversion', val: -2, name: 'Conversion', key: 'c', count: stats.c, adultOnly: false },
+        { label: '-3  Penalty Goal', val: -3, name: 'Penalty', key: 'p', count: stats.p, adultOnly: true },
+        { label: '-3  Dropped Goal', val: -3, name: 'Drop Goal', key: 'd', count: stats.d, adultOnly: true }
+      ];
+
+      const listEl = document.getElementById('corrOptionsList');
+      listEl.innerHTML = variants
+        .filter(v => state.viewMode === 'adult' || !v.adultOnly)
+        .map(v => `
+          <button type="button" class="btn-corr-option" ${v.count <= 0 ? 'disabled' : ''} 
+                  onclick="applyCorrection('${teamKey}', ${v.val}, '${v.name}', '${v.key}')">
+            <span>${v.label}</span>
+            <span class="corr-badge">Recorded: ${v.count}</span>
+          </button>
+        `).join('');
+
+      document.getElementById('correctionModal').style.display = 'flex';
+    }
+
+    function applyCorrection(teamKey, val, name, statKey) {
+      score(teamKey, val, name, statKey);
+      closeModal('correctionModal');
+    }
+
+    function undoLast() {
+      if (state.history.length === 0) {
+        showToast("Nothing to undo.", "#8b949e", 2000);
+        return;
+      }
+      const last = state.history.pop();
+
+      if (last.actionType === 'score' || (!last.actionType && last.val !== 0)) {
+        const stats = last.team === 'home' ? state.homeStats : state.awayStats;
+        if (last.statKey && last.statDelta && typeof stats[last.statKey] === 'number') {
+          stats[last.statKey] = Math.max(0, stats[last.statKey] - last.statDelta);
+        }
+        if (last.team === 'home') state.homeScore = Math.max(0, state.homeScore - last.val);
+        else if (last.team === 'away') state.awayScore = Math.max(0, state.awayScore - last.val);
+      } else if (last.actionType === 'card_or_sub' && last.squadSnapshot) {
+        state.squads[last.team] = JSON.parse(last.squadSnapshot);
+        if (typeof last.prevHomeSubs === 'number') state.homeSubsCount = last.prevHomeSubs;
+        if (typeof last.prevAwaySubs === 'number') state.awaySubsCount = last.prevAwaySubs;
+        if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      }
+
+      showToast(`↩ Undone: ${last.type}`, '#58a6ff', 3000);
+      render();
+    }
+
+    /* === Cards & Discipline (Law 9.29 Automatic 2nd Yellow -> Red + 1-999 Jersey Support) === */
+    function promptDefaultYellowDuration() {
+      const val = prompt("Standard Sin Bin duration (minutes):", state.defaultYellowMinutes);
+      if (val) {
+        const p = parseInt(val, 10);
+        if (p > 0 && p <= 90) { state.defaultYellowMinutes = p; render(); }
+      }
+    }
+
+    function parseJerseyNumber(inputStr) {
+      if (!inputStr) return null;
+      const cleaned = String(inputStr).trim();
+      const num = parseInt(cleaned, 10);
+      if (isNaN(num) || num < 1 || num > 999) return null;
+      return num;
+    }
+
+    function ensurePlayerInSquad(teamKey, num, defaultStatus = 'field') {
+      let p = state.squads[teamKey].find(x => x.number === num);
+      if (!p) {
+        p = {
+          number: num,
+          position: `Player ${num}`,
+          isFrontRow: false,
+          status: defaultStatus,
+          timerSec: 0,
+          timerType: null,
+          replacedBy: null,
+          yellowCount: 0
+        };
+        state.squads[teamKey].push(p);
+        state.squads[teamKey].sort((a, b) => a.number - b.number);
+      }
+      if (typeof p.yellowCount !== 'number') p.yellowCount = 0;
+      return p;
+    }
+
+    function issueYellowCardToPlayer(teamKey, num) {
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      const p = ensurePlayerInSquad(teamKey, num, 'field');
+
+      // Law 9.29: Second yellow card to the same player = automatic Red Card
+      if (p.yellowCount >= 1) {
+        if (confirm(`⚠️ LAW 9.29 ALERT: ${teamLabel} #${num} already received a Yellow Card!\n\nA second Yellow Card requires an automatic RED CARD (Send-Off). Issue Red Card (2nd Yellow) now?`)) {
+          const snapshot = JSON.stringify(state.squads[teamKey]);
+          p.yellowCount++;
+          p.status = 'red_card';
+          p.timerSec = 0;
+          p.timerType = 'Red';
+
+          const elapsed = state.initialSeconds - state.secondsLeft;
+          const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+          state.history.push({
+            actionType: 'card_or_sub',
+            team: teamKey,
+            teamName: teamLabel,
+            squadSnapshot: snapshot,
+            val: 0,
+            type: `🟨+🟨=🟥 2nd Yellow ➔ Red Card (Sent off): #${num}`,
+            period: periods[state.periodIdx],
+            time: `${min}'`,
+            hScore: state.homeScore,
+            aScore: state.awayScore
+          });
+          showToast(`🟥 ${teamLabel} #${num} sent off (2nd Yellow Card - Law 9.29)!`, '#da3633', 8000);
+          if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+          render();
+        }
+        return;
+      }
+
+      const durStr = prompt(`🟨 Sin Bin duration in minutes for #${num}:`, state.defaultYellowMinutes);
+      if (durStr === null) return;
+      const dur = parseInt(durStr, 10) || state.defaultYellowMinutes;
+
+      const snapshot = JSON.stringify(state.squads[teamKey]);
+      p.yellowCount = (p.yellowCount || 0) + 1;
+      p.status = 'sinbin';
+      p.timerSec = dur * 60;
+      p.timerType = 'SinBin';
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      state.history.push({
+        actionType: 'card_or_sub',
+        team: teamKey,
+        teamName: teamLabel,
+        squadSnapshot: snapshot,
+        val: 0,
+        type: `🟨 Yellow Card (${dur}m): #${num}`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+      if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      render();
+    }
+
+    function quickYellowCard(teamKey) {
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      const numStr = prompt(`🟨 Yellow Card for ${teamLabel} - Jersey Number (1–999):`, "");
+      if (!numStr) return;
+      const num = parseJerseyNumber(numStr);
+      if (!num) {
+        showToast("Please enter a valid jersey number (1–999).", "#f85149", 4000);
+        return;
+      }
+      issueYellowCardToPlayer(teamKey, num);
+    }
+
+    function issueRedCardToPlayer(teamKey, num) {
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      if (!confirm(`🟥 Confirm Red Card (Permanent Send-Off) for ${teamLabel} #${num}?`)) return;
+
+      const snapshot = JSON.stringify(state.squads[teamKey]);
+      const p = ensurePlayerInSquad(teamKey, num, 'field');
+      p.status = 'red_card';
+      p.timerSec = 0;
+      p.timerType = 'Red';
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      state.history.push({
+        actionType: 'card_or_sub',
+        team: teamKey,
+        teamName: teamLabel,
+        squadSnapshot: snapshot,
+        val: 0,
+        type: `🟥 Red Card (Sent off): #${num}`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+      if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      render();
+    }
+
+    function quickRedCardPrompt(teamKey) {
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      const numStr = prompt(`🟥 Red Card for ${teamLabel} - Jersey Number (1–999):`, "");
+      if (!numStr) return;
+      const num = parseJerseyNumber(numStr);
+      if (!num) {
+        showToast("Please enter a valid jersey number (1–999).", "#f85149", 4000);
+        return;
+      }
+      issueRedCardToPlayer(teamKey, num);
+    }
+
+    function cancelTimerEarly(teamKey, playerNum) {
+      const p = state.squads[teamKey].find(x => x.number === playerNum);
+      if (p) {
+        if (p.timerType === 'Blood' || p.timerType === 'HIA') {
+          returnTempPlayerToPitch(teamKey, playerNum);
+          return;
+        }
+        p.status = 'field';
+        p.timerSec = 0;
+        p.timerType = null;
+      }
+      if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      render();
+    }
+
+    function adjustSpecificTimer(teamKey, playerNum, delta) {
+      const p = state.squads[teamKey].find(x => x.number === playerNum);
+      if (p && p.timerSec > 0) {
+        p.timerSec = Math.max(1, p.timerSec + delta);
+        if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+        render();
+      }
+    }
+
+    /* === Law 3 Substitutions & Custom 3-Digit Jersey Management === */
+    function openSubsModal() {
+      renderSubsModal();
+      document.getElementById('subsModal').style.display = 'flex';
+    }
+
+    function switchSubsTeam(tk) {
+      state.currentSubsTeam = tk;
+      renderSubsModal();
+    }
+
+    function promptAddCustomPlayer() {
+      const tk = state.currentSubsTeam;
+      const teamLabel = tk === 'home' ? state.homeName : state.awayName;
+      const numStr = prompt(`Add player for ${teamLabel} — Enter Jersey Number (1–999):`, "");
+      if (!numStr) return;
+      const num = parseJerseyNumber(numStr);
+      if (!num) {
+        showToast("Invalid jersey number (must be 1–999).", "#f85149", 4000);
+        return;
+      }
+      if (state.squads[tk].some(x => x.number === num)) {
+        showToast(`#${num} already exists in ${teamLabel} squad.`, "#e3b341", 4000);
+        return;
+      }
+      const zoneInput = confirm(`Place #${num} directly on the PITCH?\n(Click 'OK' for Active Pitch, 'Cancel' for Bench/Reserve)`);
+      const posName = prompt(`Optional Name / Position for #${num}:`, zoneInput ? `Player ${num}` : `Reserve ${num}`) || `Player ${num}`;
+      state.squads[tk].push({
+        number: num,
+        position: posName,
+        isFrontRow: false,
+        status: zoneInput ? 'field' : 'bench',
+        timerSec: 0,
+        timerType: null,
+        replacedBy: null,
+        yellowCount: 0
+      });
+      state.squads[tk].sort((a, b) => a.number - b.number);
+      saveStateToStorage();
+      renderSubsModal();
+      showToast(`Added #${num} (${posName}) to ${teamLabel}.`, '#2ea043', 3000);
+    }
+
+    function editPlayerNumberOrName(teamKey, oldNum) {
+      const squad = state.squads[teamKey];
+      const p = squad.find(x => x.number === oldNum);
+      if (!p) return;
+
+      const newNumStr = prompt(`Edit Jersey Number for #${oldNum} (1–999):`, p.number);
+      if (newNumStr === null) return;
+      const newNum = parseJerseyNumber(newNumStr);
+      if (!newNum) {
+        showToast("Please enter a valid number between 1 and 999.", "#f85149", 3500);
+        return;
+      }
+      if (newNum !== oldNum && squad.some(x => x.number === newNum)) {
+        showToast(`Jersey #${newNum} is already assigned in this team!`, "#f85149", 4000);
+        return;
+      }
+
+      const newPos = prompt(`Edit Position / Name for #${newNum}:`, p.position);
+      p.number = newNum;
+      if (newPos !== null && newPos.trim() !== "") p.position = newPos.trim();
+
+      squad.sort((a, b) => a.number - b.number);
+      saveStateToStorage();
+      renderSubsModal();
+      render();
+    }
+
+    function toggleFrontRow(teamKey, playerNum) {
+      const p = state.squads[teamKey].find(x => x.number === playerNum);
+      if (!p) return;
+      p.isFrontRow = !p.isFrontRow;
+      saveStateToStorage();
+      renderSubsModal();
+    }
+
+    function performSubstitution(teamKey, offNum, onNum, reason) {
+      const snapshot = JSON.stringify(state.squads[teamKey]);
+      const prevHomeSubs = state.homeSubsCount;
+      const prevAwaySubs = state.awaySubsCount;
+
+      const pOff = ensurePlayerInSquad(teamKey, offNum, 'field');
+      const pOn = ensurePlayerInSquad(teamKey, onNum, 'bench');
+
+      if (pOn.status === 'red_card' || pOn.status === 'sinbin' || pOn.status === 'injured_off') {
+        showToast(`#${onNum} is ${pOn.status.toUpperCase()} and cannot enter the pitch!`, '#f85149', 5000);
+        return false;
+      }
+
+      pOn.status = 'field';
+      pOn.timerSec = 0;
+      pOn.timerType = null;
+
+      let reasonLabel = reason;
+      if (reason === 'Tactical') {
+        pOff.status = 'tactical_off';
+        if (teamKey === 'home') state.homeSubsCount++;
+        else state.awaySubsCount++;
+        reasonLabel = 'Tactical Sub';
+      } else if (reason === 'Injury') {
+        pOff.status = 'injured_off';
+        if (teamKey === 'home') state.homeSubsCount++;
+        else state.awaySubsCount++;
+        reasonLabel = 'Permanent Injury Sub';
+      } else if (reason === 'Blood') {
+        pOff.status = 'blood_bin';
+        pOff.timerSec = 15 * 60;
+        pOff.timerType = 'Blood';
+        pOff.replacedBy = onNum;
+        reasonLabel = '🩸 Blood Bin (15m Actual)';
+      } else if (reason === 'HIA') {
+        pOff.status = 'hia_bin';
+        pOff.timerSec = 12 * 60;
+        pOff.timerType = 'HIA';
+        pOff.replacedBy = onNum;
+        reasonLabel = '🧠 HIA (12m Actual)';
+      } else if (reason === 'FrontRow') {
+        pOff.status = 'tactical_off';
+        reasonLabel = 'Front Row Replacement';
+      }
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      state.history.push({
+        actionType: 'card_or_sub',
+        team: teamKey,
+        teamName: teamKey === 'home' ? state.homeName : state.awayName,
+        squadSnapshot: snapshot,
+        prevHomeSubs,
+        prevAwaySubs,
+        val: 0,
+        type: `🔄 ${reasonLabel}: #${onNum} ON for #${offNum}`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+
+      renderSubsModal();
+      render();
+      return true;
+    }
+
+    function executeQuickSub() {
+      const tk = state.currentSubsTeam;
+      const offInput = document.getElementById('quickOffNum');
+      const onInput = document.getElementById('quickOnNum');
+      const reasonSelect = document.getElementById('quickSubReason');
+
+      const offNum = parseJerseyNumber(offInput.value);
+      const onNum = parseJerseyNumber(onInput.value);
+
+      if (!offNum || !onNum) {
+        showToast("Enter valid jersey numbers (1–999) for both OFF # and ON #.", "#e3b341", 4000);
+        return;
+      }
+      if (offNum === onNum) {
+        showToast("OFF # and ON # cannot be the same player.", "#f85149", 4000);
+        return;
+      }
+
+      if (performSubstitution(tk, offNum, onNum, reasonSelect.value)) {
+        offInput.value = '';
+        onInput.value = '';
+        showToast(`Sub recorded: #${onNum} ON for #${offNum}`, '#2ea043', 3500);
+      }
+    }
+
+    function promptRowSubOff(teamKey, offNum, defaultReason = 'Tactical') {
+      const availBench = state.squads[teamKey]
+        .filter(p => p.status === 'bench' || p.status === 'tactical_off')
+        .map(p => p.number)
+        .join(', ');
+      const onStr = prompt(
+        `Sub OFF #${offNum} (${defaultReason})\nEnter replacement ON Jersey # (1–999)\nAvailable on bench: ${availBench || 'or enter custom #'}`,
+        ""
+      );
+      if (!onStr) return;
+      const onNum = parseJerseyNumber(onStr);
+      if (!onNum || onNum === offNum) {
+        showToast("Invalid replacement jersey number.", "#f85149", 3500);
+        return;
+      }
+      performSubstitution(teamKey, offNum, onNum, defaultReason);
+    }
+
+    function promptRowSubOn(teamKey, onNum) {
+      const activePitch = state.squads[teamKey]
+        .filter(p => p.status === 'field')
+        .map(p => p.number)
+        .join(', ');
+      const offStr = prompt(
+        `Bring #${onNum} ONTO pitch\nEnter Jersey # going OFF (1–999)\nCurrently on pitch: ${activePitch}`,
+        ""
+      );
+      if (!offStr) return;
+      const offNum = parseJerseyNumber(offStr);
+      if (!offNum || offNum === onNum) {
+        showToast("Invalid jersey number.", "#f85149", 3500);
+        return;
+      }
+      const reason = document.getElementById('quickSubReason').value || 'Tactical';
+      performSubstitution(teamKey, offNum, onNum, reason);
+    }
+
+    function returnTempPlayerToPitch(teamKey, returningNum) {
+      const snapshot = JSON.stringify(state.squads[teamKey]);
+      const pReturn = state.squads[teamKey].find(x => x.number === returningNum);
+      if (!pReturn) return;
+
+      const tempRepNum = pReturn.replacedBy;
+      let swapMsg = `↩ #${returningNum} returns from ${pReturn.timerType || 'Temp Sub'}`;
+
+      if (tempRepNum) {
+        const pTemp = state.squads[teamKey].find(x => x.number === tempRepNum);
+        if (pTemp && pTemp.status === 'field') {
+          pTemp.status = 'bench';
+          swapMsg += ` (#${tempRepNum} back to bench)`;
+        }
+      }
+
+      pReturn.status = 'field';
+      pReturn.timerSec = 0;
+      pReturn.timerType = null;
+      pReturn.replacedBy = null;
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      state.history.push({
+        actionType: 'card_or_sub',
+        team: teamKey,
+        teamName: teamKey === 'home' ? state.homeName : state.awayName,
+        squadSnapshot: snapshot,
+        val: 0,
+        type: swapMsg,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+
+      renderSubsModal();
+      render();
+    }
+
+    function renderSubsModal() {
+      const tk = state.currentSubsTeam;
+      const squad = state.squads[tk];
+      document.getElementById('homeSubsUsed').textContent = state.homeSubsCount;
+      document.getElementById('awaySubsUsed').textContent = state.awaySubsCount;
+      document.getElementById('tabHomeBtn').classList.toggle('active', tk === 'home');
+      document.getElementById('tabAwayBtn').classList.toggle('active', tk === 'away');
+
+      const fl = document.getElementById('fieldPlayersList');
+      const bl = document.getElementById('benchPlayersList');
+      fl.innerHTML = ''; bl.innerHTML = '';
+
+      let pitchCount = 0;
+      let benchCount = 0;
+
+      squad.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'player-row';
+
+        const m = Math.floor((p.timerSec || 0) / 60);
+        const s = String((p.timerSec || 0) % 60).padStart(2, '0');
+        const timeStr = p.timerSec > 0 ? ` (${m}:${s})` : '';
+        const yBadge = p.yellowCount === 1 ? `<span title="1 Yellow Card" style="font-size:0.65rem;">🟨</span>` : '';
+
+        if (p.status === 'field') {
+          pitchCount++;
+          row.innerHTML = `
+            <div class="player-meta">
+              <span class="player-num" onclick="editPlayerNumberOrName('${tk}', ${p.number})" title="Tap to edit jersey # (1-999) or name">#${p.number}</span>
+              <span class="fr-badge ${p.isFrontRow ? 'active' : ''}" onclick="toggleFrontRow('${tk}', ${p.number})" title="Toggle Front Row status">FR</span>
+              <strong style="font-size:0.76rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.position} ${yBadge}</strong>
+            </div>
+            <div class="player-actions">
+              <button class="btn-action-small" style="border-color:#388bfd; color:#79c0ff;" onclick="promptRowSubOff('${tk}', ${p.number}, 'Tactical')" title="Tactical Sub Off">🔄 Sub</button>
+              <button class="btn-action-small" style="border-color:#f85149; color:#ffa198;" onclick="promptRowSubOff('${tk}', ${p.number}, 'Blood')" title="Blood Bin 15m">🩸</button>
+              <button class="btn-action-small" style="border-color:#f0883e; color:#ffa657;" onclick="promptRowSubOff('${tk}', ${p.number}, 'HIA')" title="HIA 12m">🧠</button>
+              <button class="btn-action-small" onclick="issueYellowCardToPlayer('${tk}', ${p.number})" title="Yellow Card">🟨</button>
+              <button class="btn-action-small" style="color:#da3633;" onclick="issueRedCardToPlayer('${tk}', ${p.number})" title="Red Card">🟥</button>
+            </div>
+          `;
+          fl.appendChild(row);
+        } else {
+          benchCount++;
+          let statusHtml = '';
+          let actionHtml = '';
+
+          if (p.status === 'bench') {
+            statusHtml = `<span class="status-tag avail">Available</span>`;
+            actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="promptRowSubOn('${tk}', ${p.number})">⬆️ Sub ON</button>`;
+          } else if (p.status === 'tactical_off') {
+            statusHtml = `<span class="status-tag tactical">Tactical Off</span>`;
+            actionHtml = `<button class="btn-action-small" style="border-color:#388bfd; color:#79c0ff;" onclick="promptRowSubOn('${tk}', ${p.number})" title="Law 3.33 Return (FR/Blood/HIA/Foul Play)">⬆️ Return</button>`;
+          } else if (p.status === 'blood_bin') {
+            statusHtml = `<span class="status-tag temp">🩸 Blood${timeStr}</span>`;
+            actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="returnTempPlayerToPitch('${tk}', ${p.number})">↩ Return</button>`;
+          } else if (p.status === 'hia_bin') {
+            statusHtml = `<span class="status-tag temp">🧠 HIA${timeStr}</span>`;
+            actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="returnTempPlayerToPitch('${tk}', ${p.number})">↩ Return</button>`;
+          } else if (p.status === 'sinbin') {
+            statusHtml = `<span class="status-tag sinbin">🟨 Sin Bin${timeStr}</span>`;
+            actionHtml = `<button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">End ✕</button>`;
+          } else if (p.status === 'red_card') {
+            statusHtml = `<span class="status-tag redcard">🟥 Sent Off</span>`;
+          } else if (p.status === 'injured_off') {
+            statusHtml = `<span class="status-tag injured">🏥 Injured Off</span>`;
+          }
+
+          row.innerHTML = `
+            <div class="player-meta">
+              <span class="player-num" onclick="editPlayerNumberOrName('${tk}', ${p.number})" title="Tap to edit jersey # (1-999) or name">#${p.number}</span>
+              <span class="fr-badge ${p.isFrontRow ? 'active' : ''}" onclick="toggleFrontRow('${tk}', ${p.number})" title="Toggle Front Row status">FR</span>
+              <strong style="font-size:0.74rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.position} ${yBadge}</strong>
+            </div>
+            <div class="player-actions">
+              ${statusHtml}
+              ${actionHtml}
+            </div>
+          `;
+          bl.appendChild(row);
+        }
+      });
+
+      document.getElementById('pitchCountLabel').textContent = pitchCount;
+      document.getElementById('benchCountLabel').textContent = benchCount;
+    }
+
+    /* Coin Toss (Law 6.3) */
+    function openTossModal() {
+      selectTossCall('Heads');
+      document.getElementById('tossResultBox').style.display = 'none';
+      document.getElementById('coinVisual').textContent = 'HEADS';
+      document.getElementById('tossModal').style.display = 'flex';
+    }
+    function selectTossCall(side) {
+      state.tossCall = side;
+      document.getElementById('callHeadsBtn').classList.toggle('selected', side === 'Heads');
+      document.getElementById('callTailsBtn').classList.toggle('selected', side === 'Tails');
+    }
+    function flipCoin() {
+      const coin = document.getElementById('coinVisual');
+      const btn = document.getElementById('flipBtn');
+      coin.classList.remove('flipping');
+      void coin.offsetWidth;
+      coin.classList.add('flipping');
+      btn.disabled = true;
+      const isHeads = Math.random() < 0.5;
+      const res = isHeads ? 'Heads' : 'Tails';
+      setTimeout(() => {
+        coin.textContent = res.toUpperCase();
+        coin.classList.remove('flipping');
+        btn.disabled = false;
+        const guestWon = state.tossCall === res;
+        state.tossWinner = guestWon ? 'Away' : 'Home';
+        document.getElementById('tossResultText').textContent = res.toUpperCase();
+        document.getElementById('tossWinnerText').textContent = `🏆 Winner: ${guestWon ? state.awayName : state.homeName}`;
+        document.getElementById('tossResultBox').style.display = 'block';
+      }, 900);
+    }
+    function selectTossDecision(dec) {
+      const wName = state.tossWinner === 'Away' ? state.awayName : state.homeName;
+      const oName = state.tossWinner === 'Away' ? state.homeName : state.awayName;
+      const msg = `🪙 Toss: ${wName} wins & elects ${dec.toUpperCase()} (${oName} takes opposite)`;
+      state.history.push({
+        actionType: 'toss',
+        team: 'system', teamName: 'Coin Toss', val: 0, type: msg,
+        period: periods[state.periodIdx], time: "0'", hScore: state.homeScore, aScore: state.awayScore
+      });
+      closeModal('tossModal');
+      render();
+    }
+
+    /* Color Palette */
+    function openColorModal(teamKey) {
+      currentColorTarget = teamKey;
+      const teamName = teamKey === 'home' ? state.homeName : state.awayName;
+      const currentHex = teamKey === 'home' ? state.homeColor : state.awayColor;
+      
+      document.getElementById('colorModalTitle').textContent = `Team Color: ${teamName}`;
+      document.getElementById('customColorInput').value = currentHex;
+      
+      const grid = document.getElementById('paletteGrid');
+      grid.innerHTML = standardColors.map(c => `
+        <button type="button" class="palette-item ${c.hex.toLowerCase() === currentHex.toLowerCase() ? 'active-color' : ''}" 
+             style="background: ${c.hex};" 
+             onclick="selectPaletteColor('${c.hex}')" 
+             title="${c.name}">
+          ${c.hex === '#ffffff' || c.hex === '#f1e05a' ? '<span style="color:#000;">' + c.name + '</span>' : c.name}
+        </button>
+      `).join('');
+
+      document.getElementById('colorModal').style.display = 'flex';
+    }
+
+    function selectPaletteColor(hex) {
+      applyColor(hex);
+      closeModal('colorModal');
+    }
+
+    function selectCustomColor(hex) {
+      applyColor(hex);
+    }
+
+    function applyColor(hex) {
+      if (currentColorTarget === 'home') state.homeColor = hex;
+      else state.awayColor = hex;
+      render();
+    }
+
+    function getSecondaryColor(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+      let r = parseInt(hex.substr(0, 2), 16) || 0;
+      let g = parseInt(hex.substr(2, 2), 16) || 0;
+      let b = parseInt(hex.substr(4, 2), 16) || 0;
+      r = Math.max(0, Math.floor(r * 0.78));
+      g = Math.max(0, Math.floor(g * 0.78));
+      b = Math.max(0, Math.floor(b * 0.78));
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+
+    function getContrastColor(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+      const r = parseInt(hex.substr(0, 2), 16) || 0;
+      const g = parseInt(hex.substr(2, 2), 16) || 0;
+      const b = parseInt(hex.substr(4, 2), 16) || 0;
+      return (((r * 299) + (g * 587) + (b * 114)) / 1000 >= 155) ? '#111827' : '#ffffff';
+    }
+
+    function formatStatsText(s) {
+      const ptPart = (s.pt && s.pt > 0) ? ` ${s.pt}PT` : '';
+      return `${s.t}T${ptPart} ${s.c}C ${s.p}P ${s.d}D`;
+    }
+
+    function render() {
+      document.getElementById('homeName').textContent = state.homeName;
+      document.getElementById('awayName').textContent = state.awayName;
+      document.getElementById('homeScore').textContent = state.homeScore;
+      document.getElementById('awayScore').textContent = state.awayScore;
+      document.getElementById('homeName').style.color = state.homeColor;
+      document.getElementById('homeScore').style.color = state.homeColor;
+      document.getElementById('awayName').style.color = state.awayColor;
+      document.getElementById('awayScore').style.color = state.awayColor;
+
+      const hDot = document.getElementById('homeColorDot');
+      const aDot = document.getElementById('awayColorDot');
+      if (hDot) hDot.style.backgroundColor = state.homeColor;
+      if (aDot) aDot.style.backgroundColor = state.awayColor;
+
+      const hp = document.querySelector('.team-panel.home');
+      const ap = document.querySelector('.team-panel.away');
+      if (hp) { 
+        hp.style.setProperty('--home-team-bg', state.homeColor); 
+        hp.style.setProperty('--home-team-sec', getSecondaryColor(state.homeColor));
+        hp.style.setProperty('--home-team-text', getContrastColor(state.homeColor));
+        hp.style.borderColor = state.homeColor; 
+      }
+      if (ap) { 
+        ap.style.setProperty('--away-team-bg', state.awayColor); 
+        ap.style.setProperty('--away-team-sec', getSecondaryColor(state.awayColor));
+        ap.style.setProperty('--away-team-text', getContrastColor(state.awayColor));
+        ap.style.borderColor = state.awayColor; 
+      }
+
+      document.getElementById('homeStats').textContent = formatStatsText(state.homeStats);
+      document.getElementById('awayStats').textContent = formatStatsText(state.awayStats);
+      document.getElementById('periodBtn').textContent = periods[state.periodIdx];
+      document.getElementById('histCount').textContent = state.history.length;
+      document.getElementById('defaultYellowDurationLabel').textContent = `Dur: ${state.defaultYellowMinutes}m ✎`;
+
+      const lines = state.comment.trim() ? state.comment.trim().split('\n').length : 0;
+      document.getElementById('notesCountBadge').textContent = lines;
+
+      const isNeg = state.secondsLeft < 0;
+      const absSec = Math.abs(state.secondsLeft);
+      const m = String(Math.floor(absSec / 60)).padStart(2, '0');
+      const s = String(absSec % 60).padStart(2, '0');
+      const tEl = document.getElementById('timer');
+      tEl.textContent = `${isNeg ? '-' : ''}${m}:${s}`;
+      tEl.classList.toggle('ended', state.secondsLeft <= 0);
+
+      const tBtn = document.getElementById('timerBtn');
+      if (state.isRunning) {
+        tBtn.textContent = "PAUSE"; tBtn.style.background = "#da3633";
+      } else if (state.isPaused && state.hasStarted) {
+        tBtn.textContent = `RESUME (⏸ ${Math.floor(state.pauseSeconds/60)}:${String(state.pauseSeconds%60).padStart(2,'0')})`;
+        tBtn.style.background = "#d29922";
+      } else {
+        tBtn.textContent = "START"; tBtn.style.background = "var(--accent)";
+      }
+
+      const ehBtn = document.getElementById('endHalfBtn');
+      if (ehBtn) {
+        ehBtn.textContent = state.periodIdx === 0 ? "🏁 End 1st Half" : (state.periodIdx === 1 ? "🏁 Full Time" : "🏁 Finished");
+      }
+
+      renderCardBadges();
+      saveStateToStorage();
+    }
+
+    function renderCardBadges() {
+      const hl = document.getElementById('homeTimersList');
+      const al = document.getElementById('awayTimersList');
+      if (hl) hl.innerHTML = '';
+      if (al) al.innerHTML = '';
+      let activeCount = 0;
+
+      ['home', 'away'].forEach(tk => {
+        const c = tk === 'home' ? hl : al;
+        state.squads[tk].forEach(p => {
+          if (p.timerSec > 0) {
+            activeCount++;
+            const pill = document.createElement('div');
+            let pillClass = 'sinbin';
+            let icon = '🟨';
+            if (p.timerType === 'Blood') { pillClass = 'blood'; icon = '🩸'; }
+            else if (p.timerType === 'HIA') { pillClass = 'hia'; icon = '🧠'; }
+
+            pill.className = `timer-pill ${pillClass}`;
+            const m = Math.floor(p.timerSec / 60);
+            const s = String(p.timerSec % 60).padStart(2, '0');
+            pill.innerHTML = `
+              <span>${icon} <strong>#${p.number}</strong> ${m}:${s}</span>
+              <div class="timer-pill-adjust">
+                <button class="btn-pill-small" onclick="adjustSpecificTimer('${tk}', ${p.number}, -60)">-1m</button>
+                <button class="btn-pill-small" onclick="adjustSpecificTimer('${tk}', ${p.number}, 60)">+1m</button>
+                <button class="btn-pill-small" style="color:#f85149;" onclick="cancelTimerEarly('${tk}', ${p.number})">✕</button>
+              </div>
+            `;
+            c.appendChild(pill);
+          }
+        });
+      });
+      const badge = document.getElementById('activeTimersCount');
+      if (badge) badge.textContent = activeCount;
+    }
+
+    /* === Dynamic Canvas Match Sheet with Word Wrapping === */
+    function wrapCanvasLines(ctx, text, maxWidth) {
+      const paragraphs = text.split('\n');
+      const lines = [];
+      paragraphs.forEach(para => {
+        const words = para.split(' ');
+        let currentLine = '';
+        words.forEach(word => {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        });
+        lines.push(currentLine);
+      });
+      return lines;
+    }
+
+    function generateCanvas() {
+      const canvas = document.getElementById('shareCanvas');
+      const ctx = canvas.getContext('2d');
+
+      ctx.font = '14px sans-serif';
+      const commentText = state.comment.trim() || 'No special incidents reported.';
+      const wrappedNotes = wrapCanvasLines(ctx, commentText, 790);
+
+      const headerHeight = 95;
+      const scoreBoxHeight = 170;
+      const gap = 18;
+      const historyCount = Math.max(1, state.history.length);
+      const histLineHeight = 24;
+      const histBoxHeight = 55 + (historyCount * histLineHeight);
+      const commentBoxHeight = 55 + (wrappedNotes.length * 22);
+
+      canvas.width = 900;
+      canvas.height = headerHeight + scoreBoxHeight + gap + histBoxHeight + gap + commentBoxHeight + 35;
+
+      ctx.fillStyle = '#0d1117';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#30363d';
+      ctx.lineWidth = 2;
+
+      ctx.fillStyle = '#58a6ff';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText(`🏉 RUGBY MATCH REPORT ${state.viewMode === 'youth' ? '(YOUTH)' : ''}`, 32, 45);
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '16px sans-serif';
+      ctx.fillText(`${new Date().toLocaleDateString('en-GB')} • Status: ${periods[state.periodIdx]} • Subs: H ${state.homeSubsCount}/8 | A ${state.awaySubsCount}/8`, 32, 75);
+
+      let yPos = headerHeight;
+      ctx.fillStyle = '#161b22';
+      ctx.fillRect(32, yPos, 836, scoreBoxHeight);
+      ctx.strokeRect(32, yPos, 836, scoreBoxHeight);
+
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillStyle = state.homeColor;
+      ctx.fillText(state.homeName, 55, yPos + 45);
+      ctx.fillStyle = state.awayColor;
+      ctx.fillText(state.awayName, 580, yPos + 45);
+
+      ctx.font = '15px sans-serif';
+      ctx.fillStyle = '#8b949e';
+      ctx.fillText(formatStatsText(state.homeStats), 55, yPos + 72);
+      ctx.fillText(formatStatsText(state.awayStats), 580, yPos + 72);
+
+      ctx.font = 'bold 64px sans-serif';
+      ctx.fillStyle = '#f0f6fc';
+      ctx.fillText(`${state.homeScore} : ${state.awayScore}`, 355, yPos + 105);
+
+      yPos += scoreBoxHeight + gap;
+      ctx.fillStyle = '#161b22';
+      ctx.fillRect(32, yPos, 836, histBoxHeight);
+      ctx.strokeRect(32, yPos, 836, histBoxHeight);
+
+      ctx.fillStyle = '#58a6ff';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('📜 MATCH TIMELINE', 55, yPos + 33);
+
+      ctx.font = '14px monospace';
+      let hy = yPos + 60;
+      if (state.history.length === 0) {
+        ctx.fillStyle = '#8b949e';
+        ctx.fillText('No match events recorded.', 55, hy);
+      } else {
+        state.history.forEach(h => {
+          ctx.fillStyle = h.team === 'home' ? state.homeColor : (h.team === 'away' ? state.awayColor : '#d29922');
+          ctx.fillText(`• ${h.time} [${h.period}] ${h.teamName}: ${h.type} ➜ ${h.hScore}:${h.aScore}`, 55, hy);
+          hy += histLineHeight;
+        });
+      }
+
+      yPos += histBoxHeight + gap;
+      ctx.fillStyle = '#161b22';
+      ctx.fillRect(32, yPos, 836, commentBoxHeight);
+      ctx.strokeRect(32, yPos, 836, commentBoxHeight);
+
+      ctx.fillStyle = '#d29922';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText('📝 MATCH INCIDENTS / REFEREE NOTES', 55, yPos + 28);
+
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = '#e6edf3';
+      let cy = yPos + 54;
+      wrappedNotes.forEach(l => { ctx.fillText(l, 55, cy); cy += 22; });
+    }
+
+    function buildReportText() {
+      let t = `🏉 *Rugby Match Report*\n*${state.homeName}* ${state.homeScore} : ${state.awayScore} *${state.awayName}*\n`;
+      t += `(${formatStatsText(state.homeStats)} vs ${formatStatsText(state.awayStats)})\n\n`;
+      if (state.history.length > 0) {
+        t += `📜 *Match Timeline:*\n`;
+        state.history.forEach(h => { t += `• ${h.time} ${h.teamName}: ${h.type} ➜ ${h.hScore}:${h.aScore}\n`; });
+      }
+      if (state.comment.trim()) t += `\n📝 *Notes:*\n${state.comment.trim()}\n`;
+      return t;
+    }
+
+    function shareWhatsAppText() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildReportText())}`, '_blank'); }
+    function shareImage() {
+      const c = document.getElementById('shareCanvas');
+      c.toBlob(b => {
+        if (navigator.share && b) {
+          navigator.share({ files: [new File([b], 'score.png', { type: 'image/png' })], text: buildReportText() }).catch(()=>{});
+        } else { downloadImage(); }
+      });
+    }
+    function downloadImage() {
+      const a = document.createElement('a');
+      a.download = `match-${state.homeScore}-${state.awayScore}.png`;
+      a.href = document.getElementById('shareCanvas').toDataURL();
+      a.click();
+    }
+    function copyShareText() { navigator.clipboard.writeText(buildReportText()).then(() => showToast('Report copied to clipboard!', '#2ea043', 3000)); }
+
+    function triggerAirhornShort3() { playTone([0.14, 0.14, 0.14]); }
+    function triggerAirhorn() { playTone([0.35, 0.35, 0.85]); }
+    function playTone(durs) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        let cur = audioCtx.currentTime;
+        durs.forEach(d => {
+          [116, 233, 293, 349, 466].forEach(f => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sawtooth'; o.frequency.setValueAtTime(f, cur);
+            g.gain.setValueAtTime(0.001, cur);
+            g.gain.exponentialRampToValueAtTime(0.2, cur + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, cur + d);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(cur); o.stop(cur + d + 0.05);
+          });
+          cur += d + 0.12;
+        });
+      } catch(e) {}
+    }
+
+    function openShareModal() { saveComment(); generateCanvas(); document.getElementById('shareModal').style.display = 'flex'; }
+    function openTimeModal() {
+      pendingTimeModalYellowMin = null;
+      const absSec = Math.max(0, state.secondsLeft);
+      document.getElementById('modalMin').value = Math.floor(absSec / 60);
+      document.getElementById('modalSec').value = String(absSec % 60).padStart(2, '0');
+      document.getElementById('timeModal').style.display = 'flex';
+    }
+    function setModalMin(m, autoYellowMin = null) {
+      document.getElementById('modalMin').value = m;
+      document.getElementById('modalSec').value = '00';
+      pendingTimeModalYellowMin = autoYellowMin;
+    }
+    function saveTimeModal() {
+      const m = parseInt(document.getElementById('modalMin').value, 10) || 0;
+      const s = parseInt(document.getElementById('modalSec').value, 10) || 0;
+      const total = m * 60 + s;
+      state.secondsLeft = total; state.initialSeconds = total;
+      if (!state.hasStarted || state.periodIdx === 0) state.halfDurationSeconds = total;
+      if (pendingTimeModalYellowMin) {
+        state.defaultYellowMinutes = pendingTimeModalYellowMin;
+      } else if (m === 7) {
+        state.defaultYellowMinutes = 2; // Law 9.29 Sevens Variation
+      }
+      closeModal('timeModal');
+      render();
+    }
+    function openHistoryModal() {
+      const el = document.getElementById('histList');
+      el.innerHTML = state.history.length === 0 ? '<div style="color:var(--text-muted);text-align:center;">No match events yet.</div>' :
+        state.history.map(h => `<div class="history-item"><span><strong>${h.time}</strong> [${h.period}] ${h.teamName}: ${h.type}</span><strong>${h.hScore}:${h.aScore}</strong></div>`).join('');
+      document.getElementById('histModal').style.display = 'flex';
+    }
+    function promptResetAll() { document.getElementById('resetModal').style.display = 'flex'; }
+    
+    function confirmResetAll() {
+      closeModal('resetModal');
+      clearInterval(timerInterval);
+      clearInterval(pauseInterval);
+      localStorage.removeItem(STORAGE_KEY);
+      
+      state.homeName = "Home";
+      state.awayName = "Away";
+      state.homeColor = "#388bfd";
+      state.awayColor = "#f85149";
+      state.homeScore = 0; 
+      state.awayScore = 0;
+      state.homeStats = { t:0, pt:0, c:0, p:0, d:0 }; 
+      state.awayStats = { t:0, pt:0, c:0, p:0, d:0 };
+      state.periodIdx = 0; 
+      state.secondsLeft = state.halfDurationSeconds || 600;
+      state.initialSeconds = state.secondsLeft; 
+      state.isRunning = false; 
+      state.hasStarted = false;
+      state.isPaused = false;
+      state.pauseSeconds = 0;
+      state.history = []; 
+      state.comment = "";
+      state.homeSubsCount = 0;
+      state.awaySubsCount = 0;
+      state.squads = { home: generateSquad(), away: generateSquad() };
+
+      const commentEl = document.getElementById('matchComment');
+      if (commentEl) commentEl.value = "";
+      
+      saveStateToStorage();
+      render();
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function editTeam(t) {
+      const current = t === 'home' ? state.homeName : state.awayName;
+      const v = prompt("Team Name:", current);
+      if (v && v.trim()) { 
+        if (t === 'home') state.homeName = v.trim(); 
+        else state.awayName = v.trim(); 
+        saveStateToStorage();
+        render(); 
+      }
+    }
+    function saveComment() { 
+      state.comment = document.getElementById('matchComment').value; 
+      saveStateToStorage(); 
+      const lines = state.comment.trim() ? state.comment.trim().split('\n').length : 0;
+      document.getElementById('notesCountBadge').textContent = lines;
+    }
+    function clearComment() { 
+      if (confirm("Clear match notes?")) { 
+        document.getElementById('matchComment').value = ""; 
+        state.comment = ""; 
+        saveStateToStorage(); 
+        document.getElementById('notesCountBadge').textContent = '0';
+      } 
+    }
+    function appendTimestampToComment() {
+      const min = Math.max(1, Math.floor((state.initialSeconds - state.secondsLeft)/60)+1);
+      const area = document.getElementById('matchComment');
+      area.value += (area.value ? "\n" : "") + `[${min}' ${periods[state.periodIdx]}] `;
+      saveComment();
+    }
+
+    /* Orientation */
+    function cycleLayoutMode() {
+      if (state.layoutMode === 'auto') state.layoutMode = 'landscape';
+      else if (state.layoutMode === 'landscape') state.layoutMode = 'portrait';
+      else state.layoutMode = 'auto';
+      localStorage.setItem('rugby_layout_mode', state.layoutMode);
+      applyLayoutMode();
+      document.getElementById('menuLayoutLabel').textContent = 
+        state.layoutMode === 'landscape' ? 'Landscape' : (state.layoutMode === 'portrait' ? 'Portrait' : 'Auto');
+    }
+
+    function applyLayoutMode() {
+      document.body.classList.remove('mode-auto', 'mode-landscape', 'mode-portrait', 'is-portrait');
+      const isDevicePortrait = window.matchMedia("(orientation: portrait)").matches;
+
+      if (state.layoutMode === 'landscape') {
+        document.body.classList.add('mode-landscape');
+      } else if (state.layoutMode === 'portrait') {
+        document.body.classList.add('mode-portrait');
+      } else {
+        document.body.classList.add('mode-auto');
+        document.body.classList.toggle('is-portrait', isDevicePortrait);
+      }
+    }
+
+    window.addEventListener('resize', () => { if (state.layoutMode === 'auto') applyLayoutMode(); });
+    window.addEventListener('orientationchange', () => { setTimeout(applyLayoutMode, 80); });
+
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        setTimeout(() => {
+          applyLayoutMode();
+          updateInstallButtonVisibility();
+          const now = Date.now();
+
+          if (state.isRunning) {
+            const deltaSec = Math.floor((now - lastTickMs) / 1000);
+            if (deltaSec >= 1) {
+              lastTickMs += deltaSec * 1000;
+              advanceTimersBy(deltaSec);
+            }
+          } else if (state.isPaused && state.hasStarted) {
+            const deltaSec = Math.floor((now - lastPauseTickMs) / 1000);
+            if (deltaSec >= 1) {
+              lastPauseTickMs += deltaSec * 1000;
+              advancePauseBy(deltaSec);
+            }
+          }
+          render();
+          requestWakeLock();
+        }, 80);
+      } else {
+        saveStateToStorage();
+      }
+    });
+
+    window.addEventListener('pagehide', saveStateToStorage);
+    window.addEventListener('beforeunload', saveStateToStorage);
+
+    applyViewMode();
+    applyLayoutMode();
+    loadStateFromStorage();
+    render();
+    requestWakeLock();
+    updateInstallButtonVisibility();
+  </script>
+</body>
+</html>
