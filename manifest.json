@@ -1,0 +1,16 @@
+"name": "Rugby Referee Scoreboard",
+"short_name": "RugbyScore",
+"start_url": "./",
+"scope": "./",
+"display": "standalone",
+"background_color": "#0d1117",
+"theme_color": "#0d1117",
+"icons": [
+{
+"src": "icon.svg",
+"sizes": "512x512",
+"type": "image/svg+xml",
+"purpose": "any maskable"
+}
+]
+}
