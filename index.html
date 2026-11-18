@@ -238,9 +238,12 @@
     }
     .btn-corr-menu:active { background: #30363d; color: #f0f6fc; border-color: #8b949e; }
 
-    /* Full Mode Layout: Try (2.8fr) + Conv (1.2fr) on top; Pen + Drop + PT (3 equal) below */
-    body.view-adult .try-row { grid-template-columns: 2.8fr 1.2fr; }
+    /* Full Mode Layout: Shared 3-column grid so Conv aligns pixel-exact with PT */
+    body.view-adult .rugby-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+    body.view-adult .try-row,
+    body.view-adult .kicks-row { display: contents; }
     body.view-adult .try-row .btn-try {
+      grid-column: span 2;
       font-size: clamp(1.0rem, 2.0vh, 1.22rem);
       font-weight: 900;
     }
@@ -248,10 +251,12 @@
       font-size: clamp(0.84rem, 1.75vh, 1.0rem);
       font-weight: 800;
     }
-    body.view-adult .kicks-row { grid-template-columns: repeat(3, 1fr); }
     body.view-adult .kicks-row .btn-score {
       padding: clamp(4px, 1.0vh, 7px) 2px;
       font-size: clamp(0.76rem, 1.6vh, 0.9rem);
+    }
+    body.view-adult .btn-corr-menu {
+      grid-column: span 3;
     }
 
     /* Youth Mode Layout: 4:1 Split Try + Conv */
