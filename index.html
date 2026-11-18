@@ -553,6 +553,41 @@
     }
     .history-item { display: flex; justify-content: space-between; font-size: 0.82rem; border-bottom: 1px solid #21262d; padding: 4px 0; gap: 8px; }
     .history-item:last-child { border-bottom: none; }
+
+    /* === HELP MODAL ACCORDION === */
+    .help-details {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .help-details summary {
+      font-weight: 800;
+      font-size: 0.84rem;
+      color: #58a6ff;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .help-details summary::-webkit-details-marker { display: none; }
+    .help-details summary::after { content: "＋"; color: var(--text-muted); font-weight: bold; flex-shrink: 0; }
+    .help-details[open] summary::after { content: "－"; color: #58a6ff; }
+    .help-body {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #21262d;
+      font-size: 0.78rem;
+      color: var(--text);
+      line-height: 1.45;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .help-body ul, .help-body ol { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+    .help-body strong { color: #fce881; }
   </style>
 </head>
 <body class="mode-auto view-adult">
@@ -704,6 +739,7 @@
       <button class="drawer-btn" onclick="cycleLayoutMode();">📱 Orientation: <strong id="menuLayoutLabel">Auto</strong></button>
       <button class="drawer-btn" onclick="closeDrawer(); openTimeModal();">⏱ Set Half Duration <span>➔</span></button>
       <button class="drawer-btn" id="drawerInstallBtn" onclick="triggerPwaInstall();">📲 Install as App <span>➔</span></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openHelpModal();">❓ Bedienungsanleitung & Hilfe <span>➔</span></button>
     </div>
 
     <div style="margin-top:auto;">
@@ -980,6 +1016,106 @@
     </div>
   </div>
 
+  <!-- Modal: User Manual / Help -->
+  <div class="modal" id="helpModal">
+    <div class="modal-content" style="max-width: 580px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 style="color:#58a6ff; font-size:1.05rem;">❓ Bedienungsanleitung & Kurz-Hilfe</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem; padding:2px 7px;" onclick="closeModal('helpModal')">✕</button>
+      </div>
+
+      <div id="helpScrollArea" style="display:flex; flex-direction:column; gap:8px; max-height:72vh; overflow-y:auto; padding-right:2px;">
+
+        <details class="help-details" open>
+          <summary>1. Kurzüberblick, Installation & Offline-Nutzung</summary>
+          <div class="help-body">
+            <p>Das <strong>Rugby Referee Scoreboard</strong> verwaltet Spielzeit, Punktwertungen, Zeitstrafen und Auswechslungen nach World-Rugby-Regeln direkt am Spielfeldrand.</p>
+            <ul>
+              <li><strong>Als App installieren:</strong> Im Menü <strong>☰</strong> auf <strong>📲 Install as App ➔</strong> tippen (Android) bzw. im iPhone-Safari unten auf <em>Teilen ➔ Zum Home-Bildschirm</em>.</li>
+              <li><strong>100 % Offline-fähig:</strong> Einmal geladen, funktioniert die App auf dem Sportplatz komplett ohne Internetverbindung.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="help-details">
+          <summary>2. Spielvorbereitung (Modi, Teams, Zeit & Münzwurf)</summary>
+          <div class="help-body">
+            <ul>
+              <li><strong>Modus wechseln:</strong> Im Menü <strong>☰</strong> unter <strong>🏉 Mode: Full</strong> zwischen Erwachsenen- (<strong>Full</strong>) und Jugendmodus (<strong>Youth</strong> – nur Try &amp; Conv) umschalten.</li>
+              <li><strong>Teamnamen &amp; Farben:</strong> Direkt auf <strong>Home</strong> / <strong>Away</strong> tippen, um den Vereinsnamen zu ändern; auf den Farbpunkt daneben (oder im Menü <strong>☰</strong>) tippen für Trikotfarben inkl. <strong>Custom Hex Color:</strong>.</li>
+              <li><strong>Halbzeitdauer:</strong> Auf die Uhr (z. B. <strong>10:00</strong>) oder im Menü auf <strong>⏱ Set Half Duration ➔</strong> tippen, eigene Minuten/Sekunden eingeben oder Vorlagen (<strong>7m</strong>, <strong>10m</strong>, <strong>12m</strong>, <strong>35m</strong>, <strong>40m</strong>) wählen und mit <strong>Apply</strong> bestätigen.</li>
+              <li><strong>Münzwurf (Law 6):</strong> Im Menü <strong>☰</strong> über <strong>🪙 Coin Toss (Law 6) ➔</strong> Ansage wählen (<strong>🟡 Heads</strong> / <strong>⚪ Tails</strong>), <strong>🪙 Flip Coin</strong> tippen und Entscheidung (<strong>🏉 Elects Kick-off</strong> oder <strong>↔ Elects End</strong>) protokollieren.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="help-details">
+          <summary>3. Spieluhr, Time-Off &amp; Halbzeiten</summary>
+          <div class="help-body">
+            <ul>
+              <li><strong>START / PAUSE:</strong> Startet und stoppt die Spielzeit. Bei einer Unterbrechung zählt die Taste <strong>RESUME (⏸ ...)</strong> die Pausenzeit hoch und gibt alle 30 Sek. drei kurze Signaltöne aus.</li>
+              <li><strong>Zeit korrigieren:</strong> Mit <strong>-1m</strong> und <strong>+1m</strong> neben der Uhr jederzeit um eine Minute korrigieren.</li>
+              <li><strong>Nachspielzeit:</strong> Bei <strong>00:00</strong> ertönt die Sirene und die Anzeige blinkt rot. Läuft das Spiel weiter, zählt die Uhr im Minusbereich (<strong>-00:30</strong> usw.) und signalisiert alle 30 Sek.</li>
+              <li><strong>Halbzeit &amp; Abpfiff:</strong> Auf <strong>🏁 End 1st Half</strong> (bzw. <strong>🏁 Full Time</strong>) tippen und mit <strong>Yes, Blow Whistle</strong> bestätigen – die Uhr springt für <strong>2nd Half</strong> automatisch auf die volle Halbzeitdauer zurück.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="help-details">
+          <summary>4. Punkte erfassen &amp; korrigieren</summary>
+          <div class="help-body">
+            <ul>
+              <li><strong>Punkte vergeben:</strong> Über <strong>+5 Try</strong>, <strong>+2 Conv</strong>, <strong>+3 Pen</strong>, <strong>+3 Drop</strong> oder <strong>+7 PT</strong> (Strafversuch – ohne Erhöhung, inkl. Erinnerung zur Karte).</li>
+              <li><strong>Schnelles Rückgängigmachen:</strong> Oben links <strong>↩ Undo</strong> macht die letzte Aktion (Punkte, Karte oder Auswechslung) sofort rückgängig.</li>
+              <li><strong>Gezielter Abzug:</strong> Unten im Team-Feld auf <strong>± Score Correction</strong> tippen, um einzelne Wertungen (<strong>-5 Try</strong>, <strong>-7 Penalty Try (PT)</strong>, <strong>-2 Conversion</strong>, <strong>-3 Penalty Goal</strong>, <strong>-3 Dropped Goal</strong>) abzuziehen.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="help-details">
+          <summary>5. Karten &amp; Zeitstrafen (Law 9)</summary>
+          <div class="help-body">
+            <ul>
+              <li><strong>Vollbild-Karten:</strong> Oben rechts auf <strong>🟨</strong> oder <strong>🟥</strong> tippen, um den gesamten Bildschirm als Karte anzuzeigen (<strong>Tap anywhere to close</strong> schließt wieder).</li>
+              <li><strong>Standard-Strafzeit:</strong> Im Kartenfeld auf <strong>Dur: 10m ✎</strong> tippen (Vorlagen: <strong>2m (7s)</strong>, <strong>5m (Youth)</strong>, <strong>10m (Adult)</strong>).</li>
+              <li><strong>Gelbe Karte (Sin Bin):</strong> Kurz auf <strong>+ 🟨 Home</strong> / <strong>Away</strong> tippen, Rückennummer (1–999) eingeben und mit <strong>Confirm Card</strong> bestätigen.</li>
+              <li><strong>Bunker Review (🟨➔🟥):</strong> Taste <strong>+ 🟨</strong> ca. 1 Sekunde gedrückt halten. Um eine laufende Gelbe Karte nachträglich auf Rot hochzustufen, die gelbe Timer-Leiste neben dem Punktestand gedrückt halten.</li>
+              <li><strong>Rote Karte:</strong> Über <strong>+ 🟥</strong> zwischen <strong>🟥 20-Min Red Card</strong> (Ersatz nach 20 Min. Spielzeit) und <strong>🟥 Full Red (Perm.)</strong> (dauerhafte Unterzahl) wählen.</li>
+              <li><strong>2x Gelb = Rot:</strong> Erhält dieselbe Rückennummer eine zweite Gelbe Karte, vergibt die App automatisch Rot.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="help-details">
+          <summary>6. Auswechslungen, Blood &amp; HIA (Law 3)</summary>
+          <div class="help-body">
+            <ul>
+              <li><strong>Wechselmenü:</strong> Oben links auf <strong>🔄 Subs</strong> tippen (im Modus <strong>Full</strong>) und zwischen <strong>Home (0/8)</strong> und <strong>Away (0/8)</strong> wählen.</li>
+              <li><strong>Schnellwechsel:</strong> Bei <strong>Off #</strong> und <strong>➔ On #</strong> Rückennummern (1–999) eintragen, Grund wählen (<strong>Tactical Sub</strong>, <strong>Injury (Permanent)</strong>, <strong>🩸 Blood Bin (15m Actual)</strong>, <strong>🧠 HIA (12m Actual)</strong>, <strong>Front Row Rep.</strong>) und <strong>✓ Sub</strong> tippen – oder direkt in der Spielerliste <strong>🔄 Sub</strong>, <strong>🩸</strong> bzw. <strong>🧠</strong> nutzen.</li>
+              <li><strong>Spielzeit vs. Echtzeit:</strong> Gelbe Karten und 20-Min-Rote Karten pausieren bei <strong>PAUSE</strong>. <strong>🩸 Blood Bin (15m)</strong> und <strong>🧠 HIA (12m)</strong> laufen auch in Spielpausen in Echtzeit weiter und werden bei Ablauf automatisch dauerhaft.</li>
+              <li><strong>Rückkehr &amp; Kader:</strong> Kehrt ein Spieler aus Blood/HIA zurück, in der Bank-Liste <strong>↩ Return</strong> tippen. Auf eine <strong>#Nummer</strong> tippen zum Bearbeiten, <strong>+ Add #</strong> für weitere Spieler, <strong>FR</strong> für Erste Sturmreihe.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="help-details">
+          <summary>7. Notizen, Spielbericht-Export, Speicherung &amp; Tipps</summary>
+          <div class="help-body">
+            <ul>
+              <li><strong>Notizen &amp; Chronik:</strong> Über <strong>📝 Match Notes &amp; Incidents</strong> Notizen samt <strong>⏱ Insert Timestamp</strong> erfassen; über <strong>📜 Match Timeline</strong> im Menü den gesamten Spielverlauf einsehen.</li>
+              <li><strong>Bericht teilen:</strong> Oben rechts auf <strong>📤 Share</strong> tippen für <strong>📲 Share Image</strong>, <strong>💬 WhatsApp Text</strong>, <strong>💾 Save Image</strong> oder <strong>📋 Copy Text</strong>.</li>
+              <li><strong>Automatische Speicherung:</strong> Alle Daten werden sofort lokal im Gerät gespeichert. Nur das Löschen der Browserdaten oder <strong>⚠️ New Match (Reset All)</strong> im Menü setzt das Spiel zurück.</li>
+              <li><strong>Praxis-Tipps:</strong> Auf dem iPhone den seitlichen Stummschalter deaktivieren, damit die Sirene hörbar ist. Das Display bleibt aktiv geöffnet wach; beim Sperren wird die verstrichene Zeit beim Entsperren exakt nachberechnet. Über <strong>📱 Orientation: Auto</strong> im Menü lässt sich Hoch- oder Querformat feststellen.</li>
+            </ul>
+          </div>
+        </details>
+
+      </div>
+
+      <button class="btn-header" style="background:#238636; color:#fff; padding:8px; font-weight:700;" onclick="closeModal('helpModal')">Schließen</button>
+    </div>
+  </div>
+
   <script>
     function generateSquad() {
       const squad = [];
@@ -1161,6 +1297,12 @@
     function closeDrawer() {
       document.getElementById('drawer').classList.remove('open');
       document.getElementById('drawerOverlay').classList.remove('open');
+    }
+
+    function openHelpModal() {
+      const area = document.getElementById('helpScrollArea');
+      if (area) area.scrollTop = 0;
+      document.getElementById('helpModal').style.display = 'flex';
     }
 
     function openNotesModal() {
