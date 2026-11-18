@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <rect width="512" height="512" rx="110" fill="#0d1117" />
   <rect x="24" y="24" width="464" height="464" rx="92" fill="#161b22" stroke="#30363d" stroke-width="8" />
-  <!-- Disziplinar-Karten im Hintergrund -->
-  <rect x="295" y="78" width="66" height="94" rx="10" transform="rotate(12 295 78)" fill="#facc15" stroke="#0d1117" stroke-width="6" />
-  <rect x="345" y="92" width="66" height="94" rx="10" transform="rotate(24 345 92)" fill="#dc2626" stroke="#0d1117" stroke-width="6" />
+  <!-- Disziplinar-Karten im Hintergrund (Links: Rot, Rechts: Gelb) -->
+  <rect x="295" y="78" width="66" height="94" rx="10" transform="rotate(12 295 78)" fill="#dc2626" stroke="#0d1117" stroke-width="6" />
+  <rect x="345" y="92" width="66" height="94" rx="10" transform="rotate(24 345 92)" fill="#facc15" stroke="#0d1117" stroke-width="6" />
   <!-- Rugbyball -->
   <g transform="translate(240 275) rotate(-35)">
     <ellipse cx="0" cy="0" rx="165" ry="102" fill="#b45309" stroke="#f0f6fc" stroke-width="10" />

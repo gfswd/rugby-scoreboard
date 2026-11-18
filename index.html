@@ -205,7 +205,7 @@
       font-variant-numeric: tabular-nums; user-select: none;
     }
 
-    /* === SCORING BUTTONS (SWAPPED: Try + Conv on top; PT + Pen + Drop below) === */
+    /* === SCORING BUTTONS (Try + Conv on top; Pen + Drop + PT below) === */
     .rugby-buttons { display: flex; flex-direction: column; gap: 3px; margin-top: auto; flex-shrink: 0; }
     .try-row, .kicks-row { display: grid; gap: 3px; }
     
@@ -217,10 +217,10 @@
     .btn-score span { font-size: 0.56rem; font-weight: 500; opacity: 0.92; }
     .home .btn-try { background: var(--home-team-bg, #1f6feb); color: var(--home-team-text, #fff); }
     .home .btn-sec { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); }
-    .home .btn-pt  { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); border: 1px solid rgba(255,255,255,0.28); }
+    .home .btn-pt  { background: var(--home-team-pt, #0b3a82); color: var(--home-team-pt-text, #fff); border: 1px dashed rgba(255,255,255,0.25); opacity: 0.9; }
     .away .btn-try { background: var(--away-team-bg, #da3633); color: var(--away-team-text, #fff); }
     .away .btn-sec { background: var(--away-team-sec, #b62324); color: var(--away-team-text, #fff); }
-    .away .btn-pt  { background: var(--away-team-sec, #b62324); color: var(--away-team-text, #fff); border: 1px solid rgba(255,255,255,0.28); }
+    .away .btn-pt  { background: var(--away-team-pt, #7d1818); color: var(--away-team-pt-text, #fff); border: 1px dashed rgba(255,255,255,0.25); opacity: 0.9; }
 
     .btn-corr-menu {
       width: 100%;
@@ -238,7 +238,7 @@
     }
     .btn-corr-menu:active { background: #30363d; color: #f0f6fc; border-color: #8b949e; }
 
-    /* Full Mode Layout: Try (2.8fr) + Conv (1.2fr) on top; PT + Pen + Drop (3 equal) below */
+    /* Full Mode Layout: Try (2.8fr) + Conv (1.2fr) on top; Pen + Drop + PT (3 equal) below */
     body.view-adult .try-row { grid-template-columns: 2.8fr 1.2fr; }
     body.view-adult .try-row .btn-try {
       font-size: clamp(1.0rem, 2.0vh, 1.22rem);
@@ -597,9 +597,9 @@
           <button class="btn-score btn-sec btn-conv-main" onclick="score('home', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
         </div>
         <div class="kicks-row">
-          <button class="btn-score btn-pt adult-only" onclick="score('home', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
+          <button class="btn-score btn-pt adult-only" onclick="score('home', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
         </div>
         <button class="btn-corr-menu" onclick="openCorrectionModal('home')">± Score Correction</button>
       </div>
@@ -654,9 +654,9 @@
           <button class="btn-score btn-sec btn-conv-main" onclick="score('away', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
         </div>
         <div class="kicks-row">
-          <button class="btn-score btn-pt adult-only" onclick="score('away', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
+          <button class="btn-score btn-pt adult-only" onclick="score('away', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
         </div>
         <button class="btn-corr-menu" onclick="openCorrectionModal('away')">± Score Correction</button>
       </div>
@@ -2236,15 +2236,15 @@
       render();
     }
 
-    function getSecondaryColor(hex) {
+    function getSecondaryColor(hex, factor = 0.78) {
       hex = hex.replace('#', '');
       if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
       let r = parseInt(hex.substr(0, 2), 16) || 0;
       let g = parseInt(hex.substr(2, 2), 16) || 0;
       let b = parseInt(hex.substr(4, 2), 16) || 0;
-      r = Math.max(0, Math.floor(r * 0.78));
-      g = Math.max(0, Math.floor(g * 0.78));
-      b = Math.max(0, Math.floor(b * 0.78));
+      r = Math.max(0, Math.floor(r * factor));
+      g = Math.max(0, Math.floor(g * factor));
+      b = Math.max(0, Math.floor(b * factor));
       return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
     }
 
@@ -2280,15 +2280,23 @@
       const hp = document.querySelector('.team-panel.home');
       const ap = document.querySelector('.team-panel.away');
       if (hp) { 
+        const hSec = getSecondaryColor(state.homeColor, 0.78);
+        const hPt = getSecondaryColor(state.homeColor, 0.54);
         hp.style.setProperty('--home-team-bg', state.homeColor); 
-        hp.style.setProperty('--home-team-sec', getSecondaryColor(state.homeColor));
+        hp.style.setProperty('--home-team-sec', hSec);
+        hp.style.setProperty('--home-team-pt', hPt);
         hp.style.setProperty('--home-team-text', getContrastColor(state.homeColor));
+        hp.style.setProperty('--home-team-pt-text', getContrastColor(hPt));
         hp.style.borderColor = state.homeColor; 
       }
       if (ap) { 
+        const aSec = getSecondaryColor(state.awayColor, 0.78);
+        const aPt = getSecondaryColor(state.awayColor, 0.54);
         ap.style.setProperty('--away-team-bg', state.awayColor); 
-        ap.style.setProperty('--away-team-sec', getSecondaryColor(state.awayColor));
+        ap.style.setProperty('--away-team-sec', aSec);
+        ap.style.setProperty('--away-team-pt', aPt);
         ap.style.setProperty('--away-team-text', getContrastColor(state.awayColor));
+        ap.style.setProperty('--away-team-pt-text', getContrastColor(aPt));
         ap.style.borderColor = state.awayColor; 
       }
 
