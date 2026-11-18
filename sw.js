@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rugby-scoreboard-v3';
+const CACHE_NAME = 'rugby-scoreboard-v4';
 const ASSETS = [
   './',
   './index.html',
