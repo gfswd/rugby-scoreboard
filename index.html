@@ -739,7 +739,7 @@
       <button class="drawer-btn" onclick="cycleLayoutMode();">📱 Orientation: <strong id="menuLayoutLabel">Auto</strong></button>
       <button class="drawer-btn" onclick="closeDrawer(); openTimeModal();">⏱ Set Half Duration <span>➔</span></button>
       <button class="drawer-btn" id="drawerInstallBtn" onclick="triggerPwaInstall();">📲 Install as App <span>➔</span></button>
-      <button class="drawer-btn" onclick="closeDrawer(); openHelpModal();">❓ Bedienungsanleitung & Hilfe <span>➔</span></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openHelpModal();">❓ Anleitung &amp; Über diese App <span>➔</span></button>
     </div>
 
     <div style="margin-top:auto;">
@@ -1020,7 +1020,7 @@
   <div class="modal" id="helpModal">
     <div class="modal-content" style="max-width: 580px;">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
-        <h3 style="color:#58a6ff; font-size:1.05rem;">❓ Bedienungsanleitung & Kurz-Hilfe</h3>
+        <h3 style="color:#58a6ff; font-size:1.05rem;">❓ Anleitung &amp; Über diese App</h3>
         <button class="btn-pill-small" style="font-size:0.85rem; padding:2px 7px;" onclick="closeModal('helpModal')">✕</button>
       </div>
 
@@ -1106,6 +1106,18 @@
               <li><strong>Bericht teilen:</strong> Oben rechts auf <strong>📤 Share</strong> tippen für <strong>📲 Share Image</strong>, <strong>💬 WhatsApp Text</strong>, <strong>💾 Save Image</strong> oder <strong>📋 Copy Text</strong>.</li>
               <li><strong>Automatische Speicherung:</strong> Alle Daten werden sofort lokal im Gerät gespeichert. Nur das Löschen der Browserdaten oder <strong>⚠️ New Match (Reset All)</strong> im Menü setzt das Spiel zurück.</li>
               <li><strong>Praxis-Tipps:</strong> Auf dem iPhone den seitlichen Stummschalter deaktivieren, damit die Sirene hörbar ist. Das Display bleibt aktiv geöffnet wach; beim Sperren wird die verstrichene Zeit beim Entsperren exakt nachberechnet. Über <strong>📱 Orientation: Auto</strong> im Menü lässt sich Hoch- oder Querformat feststellen.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="help-details">
+          <summary>8. Über diese App, GitHub &amp; MIT-Lizenz</summary>
+          <div class="help-body">
+            <p>Das <strong>Rugby Referee Scoreboard</strong> ist ein unabhängiges Werkzeug aus der Schiedsrichter-Praxis für den Einsatz direkt am Spielfeldrand.</p>
+            <ul>
+              <li><strong>Entstehung per KI-Prompting:</strong> Diese App wurde nicht klassisch Zeile für Zeile von einem menschlichen Programmierer geschrieben. Stattdessen ist sie durch gezieltes Prompting mit KI-Sprachmodellen entstanden und wurde in vielen kleinen Schritten durch kontinuierliches Testen, Regelabgleiche (World Rugby Laws) und praktische Verbesserungen auf diesen Stand gebracht.</li>
+              <li><strong>Offener Quellcode (GitHub):</strong> Die gesamte Anwendung besteht aus einer einzigen, lokal laufenden HTML-Datei ohne versteckte Tracker oder Cloud-Abhängigkeiten. Der vollständige Quellcode ist öffentlich auf GitHub einsehbar und nachvollziehbar.</li>
+              <li><strong>MIT-Lizenz:</strong> Dieses Projekt steht unter der <strong>MIT-Lizenz</strong>. Du darfst die App kostenlos nutzen, weitergeben, kopieren und für eigene Zwecke anpassen (Nutzung auf dem Platz auf eigene Verantwortung und ohne Gewährleistung).</li>
             </ul>
           </div>
         </details>
