@@ -364,12 +364,6 @@
     .btn-card-prominent.red {
       background: #dc2626; border: 2px solid #ef4444; color: #ffffff;
     }
-    .btn-card-prominent.holding-review {
-      background: #7f1d1d !important;
-      border-color: #ef4444 !important;
-      color: #ffffff !important;
-      transform: scale(0.96);
-    }
     .card-btn-main {
       display: inline-flex; align-items: center; justify-content: center; gap: 5px;
       font-size: clamp(0.8rem, 1.75vh, 0.94rem); letter-spacing: 0.3px; white-space: nowrap;
@@ -739,16 +733,16 @@
         <button class="btn-end-half" id="endHalfBtn" onclick="promptEndHalf()">🏁 End 1st Half</button>
       </div>
 
-      <!-- Prominent Cards Section (Tap = Fullscreen Card -> Log Dialog | Hold Yellow = Bunker Review) -->
+      <!-- Prominent Cards Section (Tap = Fullscreen Card -> Log Dialog) -->
       <div class="cards-quick-box">
         <div class="cards-header">
           <span>🟨 CARDS</span>
           <span id="defaultYellowDurationLabel" onclick="openYellowDurModal()" style="cursor:pointer; text-decoration:underline;">Dur: 10m ✎</span>
         </div>
         <div class="cards-quick-buttons">
-          <button type="button" class="btn-card-prominent yellow" id="btnFullscreenYellow" title="Tap: Yellow Card | Hold: Bunker Review">
+          <button type="button" class="btn-card-prominent yellow" id="btnFullscreenYellow" onclick="showFullscreenCard('yellow')" title="Show Fullscreen Yellow Card & Log">
             <span class="card-btn-main"><span class="card-swatch yellow"></span>YELLOW<span class="card-word-wide">&nbsp;CARD</span></span>
-            <span class="card-btn-sub">(Hold = Review)</span>
+            <span class="card-btn-sub">(Sin Bin / Review)</span>
           </button>
           <button type="button" class="btn-card-prominent red" id="btnFullscreenRed" onclick="showFullscreenCard('red')" title="Show Fullscreen Red Card & Log">
             <span class="card-btn-main"><span class="card-swatch red"></span>RED<span class="card-word-wide">&nbsp;CARD</span></span>
@@ -848,7 +842,7 @@
 
       <div class="card-type-grid">
         <button type="button" class="btn-card-type" id="typeYellowBtn" onclick="selectCardModalType('yellow')">🟨 Yellow (Sin Bin)</button>
-        <button type="button" class="btn-card-type" id="typeReviewBtn" onclick="selectCardModalType('yellow_review')">🟨➔🟥 Yellow (Review)</button>
+        <button type="button" class="btn-card-type" id="typeReviewBtn" onclick="selectCardModalType('yellow_review')">🟨➔🟥 Bunker Review</button>
         <button type="button" class="btn-card-type" id="typeRed20Btn" onclick="selectCardModalType('red_20')">🟥 20-Min Red Card</button>
         <button type="button" class="btn-card-type" id="typeRedFullBtn" onclick="selectCardModalType('red_full')">🟥 Full Red (Perm.)</button>
       </div>
@@ -1164,7 +1158,7 @@
             <ul>
               <li><strong>Gelbe &amp; Rote Karte (Vollbild ➔ Erfassen):</strong> Im Kartenfeld auf <strong>YELLOW CARD</strong> oder <strong>RED CARD</strong> tippen, um den gesamten Bildschirm als Karte vorzuzeigen. Ein Tipp auf die Vollbild-Karte schließt sie und öffnet direkt den Karten-Dialog für Team (<strong>Home</strong> / <strong>Away</strong>) und Rückennummer (1–999). Bei reinem Vorzeigen einfach auf <strong>Cancel</strong> tippen.</li>
               <li><strong>Standard-Strafzeit:</strong> Über dem Kartenfeld auf <strong>Dur: 10m ✎</strong> tippen (Vorlagen: <strong>2m (7s)</strong>, <strong>5m (Youth)</strong>, <strong>10m (Adult)</strong>).</li>
-              <li><strong>Bunker Review (🟨➔🟥):</strong> Taste <strong>YELLOW CARD</strong> ca. 1 Sekunde gedrückt halten – die Vollbild-Karte öffnet mit Review-Hinweis und wählt im Dialog direkt <strong>Yellow (Review)</strong> vor. Um eine laufende Gelbe Karte nachträglich auf Rot hochzustufen, die gelbe Timer-Leiste neben dem Punktestand gedrückt halten.</li>
+              <li><strong>Sin Bin &amp; Bunker Review (🟨➔🟥):</strong> Nach der gelben Vollbild-Karte ist im Dialog standardmäßig <strong>🟨 Yellow (Sin Bin)</strong> mit der eingestellten Strafzeit (Standard: 10 Min.) vorausgewählt. Für ein Off-Field-Review im Dialog aktiv <strong>🟨➔🟥 Bunker Review</strong> antippen. Um eine laufende Gelbe Karte nachträglich auf Rot hochzustufen, die gelbe Timer-Leiste neben dem Punktestand gedrückt halten.</li>
               <li><strong>Rote Karte:</strong> Im Dialog nach <strong>RED CARD</strong> zwischen <strong>🟥 20-Min Red Card</strong> (Ersatz nach 20 Min. Spielzeit) und <strong>🟥 Full Red (Perm.)</strong> (dauerhafte Unterzahl) wählen.</li>
               <li><strong>2x Gelb = Rot:</strong> Erhält dieselbe Rückennummer eine zweite Gelbe Karte, vergibt die App automatisch Rot.</li>
             </ul>
@@ -1383,40 +1377,27 @@
       { name: "Teal", hex: "#39c5cf" }
     ];
 
-    /* === Fullscreen Card Display (Yellow / Yellow Review / Red) === */
-    function showFullscreenCard(mode) {
-      activeFullscreenCardColor = mode;
+    /* === Fullscreen Card Display (Yellow / Red) === */
+    function showFullscreenCard(color) {
+      activeFullscreenCardColor = color;
       const overlay = document.getElementById('fullscreenCardOverlay');
       const title = document.getElementById('fullscreenCardTitle');
-      const isYellow = (mode === 'yellow' || mode === 'yellow_review');
       overlay.classList.remove('yellow', 'red');
-      overlay.classList.add(isYellow ? 'yellow' : 'red');
-      if (mode === 'yellow_review') {
-        title.textContent = '🟨➔🟥 YELLOW CARD • REVIEW';
-      } else if (mode === 'yellow') {
-        title.textContent = '🟨 YELLOW CARD';
-      } else {
-        title.textContent = '🟥 RED CARD';
-      }
+      overlay.classList.add(color);
+      title.textContent = color === 'yellow' ? '🟨 YELLOW CARD' : '🟥 RED CARD';
       overlay.style.display = 'flex';
       if (navigator.vibrate) {
-        try {
-          if (mode === 'yellow') navigator.vibrate([200]);
-          else if (mode === 'yellow_review') navigator.vibrate([120, 60, 220]);
-          else navigator.vibrate([350, 100, 350]);
-        } catch (e) {}
+        try { navigator.vibrate(color === 'yellow' ? [200] : [350, 100, 350]); } catch (e) {}
       }
     }
 
     function closeFullscreenCard() {
       document.getElementById('fullscreenCardOverlay').style.display = 'none';
-      const shownMode = activeFullscreenCardColor;
+      const shownColor = activeFullscreenCardColor;
       activeFullscreenCardColor = null;
-      if (shownMode === 'yellow') {
+      if (shownColor === 'yellow') {
         openCardIssueModal(null, 'yellow');
-      } else if (shownMode === 'yellow_review') {
-        openCardIssueModal(null, 'yellow_review');
-      } else if (shownMode === 'red') {
+      } else if (shownColor === 'red') {
         openCardIssueModal(null, 'red_20');
       }
     }
@@ -1501,7 +1482,8 @@
 
       const start = (e) => {
         if (e.button && e.button !== 0) return;
-        if (e.target && e.target !== el && e.target.closest('button')) return;
+        const hitBtn = e.target && e.target.closest ? e.target.closest('button') : null;
+        if (hitBtn && hitBtn !== el) return;
         held = false;
         el.classList.add('holding-review');
         holdTimer = setTimeout(() => {
@@ -1536,7 +1518,8 @@
       el.addEventListener('pointerleave', cancel);
       el.addEventListener('pointercancel', cancel);
       el.addEventListener('contextmenu', (e) => {
-        if (e.target && e.target !== el && e.target.closest('button')) return;
+        const hitBtn = e.target && e.target.closest ? e.target.closest('button') : null;
+        if (hitBtn && hitBtn !== el) return;
         e.preventDefault();
       });
     }
@@ -2245,6 +2228,7 @@
       const jInput = document.getElementById('cardJerseyInput');
       jInput.value = prefillJersey;
       document.getElementById('cardDurationInput').value = state.defaultYellowMinutes;
+      document.getElementById('typeYellowBtn').textContent = `🟨 ${state.defaultYellowMinutes}m Sin Bin`;
 
       selectCardModalType(defaultType);
       document.getElementById('cardIssueModal').style.display = 'flex';
@@ -3633,13 +3617,6 @@
 
     window.addEventListener('pagehide', saveStateToStorage);
     window.addEventListener('beforeunload', saveStateToStorage);
-
-    /* Bind Press & Hold on Prominent Yellow Card Button (Tap = Fullscreen Yellow, Hold = Fullscreen Yellow Review) */
-    bindPressHold(
-      document.getElementById('btnFullscreenYellow'),
-      () => showFullscreenCard('yellow'),
-      () => showFullscreenCard('yellow_review')
-    );
 
     syncViewportHeight();
     applyViewMode();
