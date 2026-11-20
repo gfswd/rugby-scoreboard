@@ -13,7 +13,9 @@
 
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
 
   <style>
     :root {
@@ -344,19 +346,20 @@
 
     /* Timer Pills */
     .timer-pill {
-      font-size: 0.63rem; padding: 2px 4px; border-radius: 4px; background: #161b22;
+      font-size: 0.68rem; padding: 3px 5px; border-radius: 5px; background: #161b22;
       display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);
-      gap: 3px;
+      gap: 4px;
     }
     .timer-pill.sinbin { border-color: var(--card-yellow); background: rgba(227, 179, 65, 0.12); }
     .timer-pill.review { border-color: #f85149; background: linear-gradient(90deg, rgba(227, 179, 65, 0.16), rgba(218, 54, 51, 0.22)); }
     .timer-pill.red20 { border-color: var(--card-red); background: rgba(218, 54, 51, 0.18); }
     .timer-pill.blood { border-color: var(--blood-color); background: rgba(248, 81, 73, 0.12); }
     .timer-pill.hia { border-color: var(--hia-color); background: rgba(240, 136, 62, 0.12); }
-    .timer-pill-adjust { display: flex; align-items: center; gap: 2px; }
+    .timer-pill-adjust { display: flex; align-items: center; gap: 3px; }
     .btn-pill-small {
       background: #21262d; border: 1px solid var(--border); color: var(--text);
-      font-size: 0.58rem; padding: 1px 4px; border-radius: 3px;
+      font-size: 0.68rem; font-weight: 700; padding: 3px 6px; min-height: 28px; min-width: 28px;
+      border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;
     }
 
     /* === DRAWER MENU === */
@@ -394,6 +397,26 @@
     .modal {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
       z-index: 100; justify-content: center; align-items: center; padding: 12px;
+    }
+    .modal.modal-top { z-index: 150; }
+    .text-input-modal {
+      width: 100%; font-size: 1rem; font-weight: 600;
+      background: #0d1117; color: #fff; border: 2px solid #30363d;
+      border-radius: 8px; padding: 9px 10px; font-family: inherit;
+    }
+    .text-input-modal:focus { border-color: #58a6ff; outline: none; }
+    .zone-toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .quick-chip-grid {
+      display: flex; flex-wrap: wrap; gap: 5px; max-height: 120px; overflow-y: auto;
+      background: #0d1117; border: 1px solid var(--border); border-radius: 7px; padding: 6px;
+    }
+    .btn-jersey-chip {
+      background: #21262d; border: 1px solid var(--border); color: #79c0ff;
+      font-family: monospace; font-weight: 800; font-size: 0.82rem;
+      min-width: 40px; min-height: 32px; padding: 4px 8px; border-radius: 5px;
+    }
+    .btn-jersey-chip:active, .btn-jersey-chip.selected {
+      background: #1f6feb; color: #fff; border-color: #58a6ff;
     }
     .modal-content {
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
@@ -749,7 +772,7 @@
   </div>
 
   <!-- Modal: Numeric Card Issue Modal (Yellow / Yellow Bunker Review / 20m Red / Full Red) -->
-  <div class="modal" id="cardIssueModal">
+  <div class="modal modal-top" id="cardIssueModal">
     <div class="modal-content" style="max-width: 410px;">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
         <h3 id="cardIssueTitle" style="color:#fce881; font-size:1.0rem;">🟨 Issue Card</h3>
@@ -1129,6 +1152,95 @@
     </div>
   </div>
 
+  <!-- Modal: Edit Team Name (In-App Replacement for prompt) -->
+  <div class="modal modal-top" id="teamNameModal">
+    <div class="modal-content" style="max-width: 380px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 id="teamNameModalTitle" style="color:#58a6ff; font-size:1.0rem;">Edit Team Name</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem;" onclick="closeModal('teamNameModal')">✕</button>
+      </div>
+      <input type="text" id="teamNameInput" class="text-input-modal" maxlength="40" placeholder="Team Name">
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn-header" style="flex:1; padding:10px;" onclick="closeModal('teamNameModal')">Cancel</button>
+        <button class="btn-header" style="flex:1.4; padding:10px; background:#238636; color:#fff; font-weight:800;" onclick="confirmTeamName()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Player (In-App Replacement for prompt/confirm) -->
+  <div class="modal modal-top" id="playerEditModal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 id="playerEditTitle" style="color:#79c0ff; font-size:1.0rem;">Player Details</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem;" onclick="closeModal('playerEditModal')">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <label for="playerEditNumInput" style="font-size:0.78rem; color:var(--text-muted); font-weight:700;">Jersey Number (1–999):</label>
+        <input type="number" id="playerEditNumInput" class="num-input-large" inputmode="numeric" pattern="[0-9]*" min="1" max="999" placeholder="#">
+      </div>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label for="playerEditPosInput" style="font-size:0.78rem; color:var(--text-muted); font-weight:700;">Name / Position (optional):</label>
+        <input type="text" id="playerEditPosInput" class="text-input-modal" maxlength="36" placeholder="e.g. Player 24 / Prop">
+      </div>
+      <div id="playerEditZoneWrap" style="display:none; flex-direction:column; gap:4px;">
+        <span style="font-size:0.78rem; color:var(--text-muted); font-weight:700;">Start Position:</span>
+        <div class="zone-toggle-row">
+          <button type="button" class="btn-card-type" id="playerZonePitchBtn" onclick="selectPlayerEditZone('field')">Active Pitch</button>
+          <button type="button" class="btn-card-type" id="playerZoneBenchBtn" onclick="selectPlayerEditZone('bench')">Bench / Reserve</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn-header" style="flex:1; padding:10px;" onclick="closeModal('playerEditModal')">Cancel</button>
+        <button class="btn-header" style="flex:1.4; padding:10px; background:#238636; color:#fff; font-weight:800;" onclick="confirmPlayerEdit()">Save Player</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Row Substitution Picker (In-App Replacement for prompt) -->
+  <div class="modal modal-top" id="rowSubModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 id="rowSubTitle" style="color:#d2a8ff; font-size:1.0rem;">🔄 Substitution</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem;" onclick="closeModal('rowSubModal')">✕</button>
+      </div>
+      <p id="rowSubDesc" style="font-size:0.78rem; color:var(--text-muted);"></p>
+      <div style="display:flex; justify-content:center; align-items:center; gap:10px;">
+        <span id="rowSubInputLabel" style="font-size:0.84rem; font-weight:800; color:#58a6ff;">ON #</span>
+        <input type="number" id="rowSubNumInput" class="num-input-large" inputmode="numeric" pattern="[0-9]*" min="1" max="999" placeholder="#">
+      </div>
+      <div>
+        <div id="rowSubChipsLabel" style="font-size:0.72rem; color:var(--text-muted); font-weight:700; margin-bottom:4px;">Quick Select:</div>
+        <div class="quick-chip-grid" id="rowSubChips"></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <label for="rowSubReasonSelect" style="font-size:0.78rem; color:var(--text-muted); font-weight:700;">Reason:</label>
+        <select id="rowSubReasonSelect" class="select-sub-type" style="flex:1; padding:7px 8px;">
+          <option value="Tactical">Tactical Sub</option>
+          <option value="Injury">Injury (Permanent)</option>
+          <option value="Blood">🩸 Blood Bin (15m Actual)</option>
+          <option value="HIA">🧠 HIA (12m Actual)</option>
+          <option value="FrontRow">Front Row Rep.</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn-header" style="flex:1; padding:10px;" onclick="closeModal('rowSubModal')">Cancel</button>
+        <button class="btn-header" style="flex:1.4; padding:10px; background:#238636; color:#fff; font-weight:800;" onclick="confirmRowSub()">Confirm Sub</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Generic Confirmation (In-App Replacement for confirm) -->
+  <div class="modal modal-top" id="confirmActionModal">
+    <div class="modal-content" style="max-width: 350px; text-align: center;">
+      <h3 id="confirmActionTitle" style="color:#f85149; font-size:1.0rem;">Confirm</h3>
+      <p id="confirmActionDesc" style="font-size:0.84rem; color:var(--text-muted); line-height:1.4;"></p>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn-header" style="flex:1; padding:10px;" onclick="closeModal('confirmActionModal')">Cancel</button>
+        <button class="btn-header" style="flex:1; padding:10px; background:#da3633; color:#fff; font-weight:800;" onclick="executePendingConfirmAction()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function generateSquad() {
       const squad = [];
@@ -1187,6 +1299,13 @@
 
     let cardModalTeam = 'home';
     let cardModalType = 'yellow';
+    let lastBadgesSignature = '';
+    let storageQuotaWarned = false;
+
+    let teamNameEditTarget = 'home';
+    let playerEditContext = { mode: 'add', teamKey: 'home', oldNum: null, zone: 'bench' };
+    let rowSubContext = { mode: 'off', teamKey: 'home', fixedNum: null };
+    let pendingConfirmCallback = null;
 
     const STORAGE_KEY = 'rugby_match_state_v1';
     const periods = ["1st Half", "2nd Half", "Full Time"];
@@ -1219,34 +1338,69 @@
       document.getElementById('fullscreenCardOverlay').style.display = 'none';
     }
 
-    /* === iOS / Mobile Audio Unlocker === */
+    /* === HTML Escaping & Contrast Helpers === */
+    function escapeHtml(str) {
+      return String(str == null ? '' : str).replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function getHexLuminance(hex) {
+      if (typeof hex !== 'string') return 128;
+      let clean = hex.replace('#', '').trim();
+      if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+      if (!/^[0-9a-fA-F]{6}$/.test(clean)) return 128;
+      const r = parseInt(clean.substr(0, 2), 16) || 0;
+      const g = parseInt(clean.substr(2, 2), 16) || 0;
+      const b = parseInt(clean.substr(4, 2), 16) || 0;
+      return ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    }
+
+    function getReadableOnDark(hex) {
+      return getHexLuminance(hex) < 72 ? '#f0f6fc' : hex;
+    }
+
+    /* === iOS / Mobile Audio Unlocker (handles suspended & iOS interrupted states) === */
     function unlockAudioContext() {
-      if (audioUnlocked) return;
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const buffer = audioCtx.createBuffer(1, 1, 22050);
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        if (source.start) source.start(0);
-        audioUnlocked = true;
+        if (audioCtx.state !== 'running') {
+          audioCtx.resume().catch(() => {});
+        }
+        if (!audioUnlocked) {
+          const buffer = audioCtx.createBuffer(1, 1, 22050);
+          const source = audioCtx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(audioCtx.destination);
+          if (source.start) source.start(0);
+          audioUnlocked = true;
+        }
       } catch (e) {}
     }
-    window.addEventListener('touchstart', unlockAudioContext, { once: true, passive: true });
-    window.addEventListener('click', unlockAudioContext, { once: true, passive: true });
+    window.addEventListener('touchstart', unlockAudioContext, { passive: true });
+    window.addEventListener('click', unlockAudioContext, { passive: true });
 
-    /* === Non-Blocking Toast Notification System === */
+    /* === Non-Blocking Toast Notification System (XSS-safe via textContent) === */
     function showToast(message, borderColor = '#e3b341', durationMs = 10000) {
       const container = document.getElementById('toastContainer');
       if (!container) return;
       const toast = document.createElement('div');
       toast.className = 'toast-banner';
       toast.style.borderColor = borderColor;
-      toast.innerHTML = `
-        <span>${message}</span>
-        <button class="btn-pill-small" style="padding:3px 7px; font-size:0.75rem;" onclick="this.parentElement.remove()">OK</button>
-      `;
+
+      const msgSpan = document.createElement('span');
+      msgSpan.textContent = String(message == null ? '' : message);
+
+      const okBtn = document.createElement('button');
+      okBtn.type = 'button';
+      okBtn.className = 'btn-pill-small';
+      okBtn.style.padding = '3px 8px';
+      okBtn.style.fontSize = '0.75rem';
+      okBtn.textContent = 'OK';
+      okBtn.addEventListener('click', () => toast.remove());
+
+      toast.appendChild(msgSpan);
+      toast.appendChild(okBtn);
       container.appendChild(toast);
       if (navigator.vibrate) {
         try { navigator.vibrate([250, 120, 250]); } catch (e) {}
@@ -1264,9 +1418,12 @@
 
       const start = (e) => {
         if (e.button && e.button !== 0) return;
+        if (e.target && e.target !== el && e.target.closest('button')) return;
         held = false;
         el.classList.add('holding-review');
         holdTimer = setTimeout(() => {
+          holdTimer = null;
+          if (!el.isConnected) return;
           held = true;
           el.classList.remove('holding-review');
           if (navigator.vibrate) { try { navigator.vibrate([80, 50, 140]); } catch (err) {} }
@@ -1284,7 +1441,7 @@
         if (holdTimer) {
           clearTimeout(holdTimer);
           holdTimer = null;
-          if (!held) {
+          if (!held && typeof onShortTap === 'function') {
             e.preventDefault();
             onShortTap();
           }
@@ -1295,7 +1452,10 @@
       el.addEventListener('pointerup', end);
       el.addEventListener('pointerleave', cancel);
       el.addEventListener('pointercancel', cancel);
-      el.addEventListener('contextmenu', (e) => e.preventDefault());
+      el.addEventListener('contextmenu', (e) => {
+        if (e.target && e.target !== el && e.target.closest('button')) return;
+        e.preventDefault();
+      });
     }
 
     /* Drawer */
@@ -1413,7 +1573,29 @@
 
     async function forceAppUpdate() {
       saveStateToStorage();
-      showToast("🔄 Suche nach App-Update...", "#58a6ff", 3000);
+      if (!navigator.onLine) {
+        showToast("⚠️ Offline: App-Update benötigt Internet. Offline-Version bleibt geschützt.", "#e3b341", 5500);
+        return;
+      }
+      showToast("🔄 Prüfe Verbindung & suche App-Update...", "#58a6ff", 3000);
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4500);
+        const testRes = await fetch('./index.html?update_check=' + Date.now(), {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!testRes || !testRes.ok) throw new Error('Network error');
+        const testText = await testRes.text();
+        if (!testText || !testText.includes('Rugby Referee Scoreboard')) {
+          throw new Error('Invalid HTML response');
+        }
+      } catch (e) {
+        showToast("⚠️ Kein Internet / Server nicht erreichbar – Offline-Cache bleibt erhalten.", "#f85149", 6000);
+        return;
+      }
+
       try {
         if ('caches' in window) {
           const keys = await caches.keys();
@@ -1472,7 +1654,8 @@
 
     /* === World Rugby Law 3 & Law 9 Timer Engine (Playing Time vs. Actual Time) === */
     function tickPlayerTimers(deltaSec, includePlayingTime) {
-      if (deltaSec <= 0) return;
+      if (deltaSec <= 0) return false;
+      let structureChanged = false;
       ['home', 'away'].forEach(teamKey => {
         const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
         state.squads[teamKey].forEach(p => {
@@ -1482,6 +1665,7 @@
 
             p.timerSec = Math.max(0, p.timerSec - deltaSec);
             if (p.timerSec === 0) {
+              structureChanged = true;
               const expiredType = p.timerType;
               triggerAirhornShort3();
               if (expiredType === 'SinBin' || expiredType === 'YellowReview') {
@@ -1512,12 +1696,14 @@
       });
 
       if (document.getElementById('subsModal').style.display === 'flex') {
-        renderSubsModal();
+        if (structureChanged) renderSubsModal();
+        else updateSubsModalTimersOnly();
       }
+      return structureChanged;
     }
 
     function advanceTimersBy(deltaSec) {
-      if (deltaSec <= 0) return;
+      if (deltaSec <= 0) return false;
       const prevSec = state.secondsLeft;
       state.secondsLeft -= deltaSec;
 
@@ -1530,18 +1716,18 @@
         if (curOver > prevOver) triggerAirhornShort3();
       }
 
-      tickPlayerTimers(deltaSec, true);
+      return tickPlayerTimers(deltaSec, true);
     }
 
     function advancePauseBy(deltaSec) {
-      if (deltaSec <= 0) return;
+      if (deltaSec <= 0) return false;
       const prevBlocks = Math.floor((state.pauseSeconds || 0) / 30);
       state.pauseSeconds = (state.pauseSeconds || 0) + deltaSec;
       const curBlocks = Math.floor(state.pauseSeconds / 30);
       if (curBlocks > prevBlocks) triggerAirhornShort3();
 
       // Blood Bin (15m) and HIA (12m) run in continuous Actual Time even during stoppages (Law 3.25 / 3.27b)
-      tickPlayerTimers(deltaSec, false);
+      return tickPlayerTimers(deltaSec, false);
     }
 
     function startTimerLoop() {
@@ -1552,8 +1738,9 @@
         const deltaSec = Math.floor((now - lastTickMs) / 1000);
         if (deltaSec >= 1) {
           lastTickMs += deltaSec * 1000;
-          advanceTimersBy(deltaSec);
-          render();
+          const didExpire = advanceTimersBy(deltaSec);
+          if (didExpire) saveStateToStorage();
+          renderTickOnly();
         }
       }, 250);
     }
@@ -1566,8 +1753,9 @@
         const deltaSec = Math.floor((now - lastPauseTickMs) / 1000);
         if (deltaSec >= 1) {
           lastPauseTickMs += deltaSec * 1000;
-          advancePauseBy(deltaSec);
-          render();
+          const didExpire = advancePauseBy(deltaSec);
+          if (didExpire) saveStateToStorage();
+          renderTickOnly();
         }
       }, 250);
     }
@@ -1576,7 +1764,44 @@
       try {
         const activeRefMs = state.isRunning ? lastTickMs : (state.isPaused ? lastPauseTickMs : Date.now());
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, lastActiveTimestamp: activeRefMs }));
-      } catch (e) {}
+      } catch (e) {
+        if (!storageQuotaWarned && e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+          storageQuotaWarned = true;
+          showToast("⚠️ Gerätespeicher voll – Spielstand konnte nicht lokal gesichert werden.", "#f85149", 8000);
+        }
+      }
+    }
+
+    function sanitizeStats(raw) {
+      const src = (raw && typeof raw === 'object') ? raw : {};
+      return {
+        t: Number.isFinite(src.t) && src.t >= 0 ? Math.floor(src.t) : 0,
+        pt: Number.isFinite(src.pt) && src.pt >= 0 ? Math.floor(src.pt) : 0,
+        c: Number.isFinite(src.c) && src.c >= 0 ? Math.floor(src.c) : 0,
+        p: Number.isFinite(src.p) && src.p >= 0 ? Math.floor(src.p) : 0,
+        d: Number.isFinite(src.d) && src.d >= 0 ? Math.floor(src.d) : 0
+      };
+    }
+
+    function sanitizeSquad(raw) {
+      if (!Array.isArray(raw) || raw.length === 0) return generateSquad();
+      const valid = [];
+      raw.forEach((item) => {
+        if (!item || typeof item !== 'object') return;
+        const num = parseInt(item.number, 10);
+        if (!Number.isFinite(num) || num < 1 || num > 999) return;
+        valid.push({
+          number: num,
+          position: typeof item.position === 'string' && item.position.trim() ? item.position : `Player ${num}`,
+          isFrontRow: Boolean(item.isFrontRow),
+          status: typeof item.status === 'string' ? item.status : 'bench',
+          timerSec: Number.isFinite(item.timerSec) && item.timerSec >= 0 ? Math.floor(item.timerSec) : 0,
+          timerType: typeof item.timerType === 'string' ? item.timerType : null,
+          replacedBy: Number.isFinite(item.replacedBy) ? item.replacedBy : null,
+          yellowCount: Number.isFinite(item.yellowCount) && item.yellowCount >= 0 ? Math.floor(item.yellowCount) : 0
+        });
+      });
+      return valid.length > 0 ? valid : generateSquad();
     }
 
     function loadStateFromStorage() {
@@ -1587,20 +1812,40 @@
         if (!saved || typeof saved !== 'object') return false;
 
         Object.assign(state, saved);
-        if (!state.halfDurationSeconds) state.halfDurationSeconds = state.initialSeconds || 600;
-        if (!state.homeStats) state.homeStats = { t: 0, pt: 0, c: 0, p: 0, d: 0 };
-        if (typeof state.homeStats.pt !== 'number') state.homeStats.pt = 0;
-        if (!state.awayStats) state.awayStats = { t: 0, pt: 0, c: 0, p: 0, d: 0 };
-        if (typeof state.awayStats.pt !== 'number') state.awayStats.pt = 0;
-        if (!state.squads || !Array.isArray(state.squads.home) || !Array.isArray(state.squads.away)) {
-          state.squads = { home: generateSquad(), away: generateSquad() };
-        }
+        state.homeName = (typeof state.homeName === 'string' && state.homeName.trim()) ? state.homeName : 'Home';
+        state.awayName = (typeof state.awayName === 'string' && state.awayName.trim()) ? state.awayName : 'Away';
+        state.homeColor = (typeof state.homeColor === 'string' && /^#[0-9a-fA-F]{3,6}$/.test(state.homeColor)) ? state.homeColor : '#388bfd';
+        state.awayColor = (typeof state.awayColor === 'string' && /^#[0-9a-fA-F]{3,6}$/.test(state.awayColor)) ? state.awayColor : '#f85149';
+        state.homeScore = Number.isFinite(state.homeScore) && state.homeScore >= 0 ? Math.floor(state.homeScore) : 0;
+        state.awayScore = Number.isFinite(state.awayScore) && state.awayScore >= 0 ? Math.floor(state.awayScore) : 0;
+        state.homeStats = sanitizeStats(state.homeStats);
+        state.awayStats = sanitizeStats(state.awayStats);
+        state.periodIdx = Number.isInteger(state.periodIdx) && state.periodIdx >= 0 && state.periodIdx < periods.length ? state.periodIdx : 0;
+        state.initialSeconds = Number.isFinite(state.initialSeconds) && state.initialSeconds >= 0 ? Math.floor(state.initialSeconds) : 600;
+        state.halfDurationSeconds = Number.isFinite(state.halfDurationSeconds) && state.halfDurationSeconds > 0 ? Math.floor(state.halfDurationSeconds) : (state.initialSeconds || 600);
+        state.secondsLeft = Number.isFinite(state.secondsLeft) ? Math.floor(state.secondsLeft) : state.initialSeconds;
+        state.isRunning = Boolean(state.isRunning);
+        state.hasStarted = Boolean(state.hasStarted);
+        state.isPaused = Boolean(state.isPaused);
+        state.pauseSeconds = Number.isFinite(state.pauseSeconds) && state.pauseSeconds >= 0 ? Math.floor(state.pauseSeconds) : 0;
+        state.history = Array.isArray(state.history) ? state.history.filter(h => h && typeof h === 'object') : [];
+        state.comment = typeof state.comment === 'string' ? state.comment : '';
+        state.currentSubsTeam = state.currentSubsTeam === 'away' ? 'away' : 'home';
+        state.homeSubsCount = Number.isFinite(state.homeSubsCount) && state.homeSubsCount >= 0 ? Math.floor(state.homeSubsCount) : 0;
+        state.awaySubsCount = Number.isFinite(state.awaySubsCount) && state.awaySubsCount >= 0 ? Math.floor(state.awaySubsCount) : 0;
+        state.defaultYellowMinutes = Number.isFinite(state.defaultYellowMinutes) && state.defaultYellowMinutes >= 1 && state.defaultYellowMinutes <= 60 ? Math.floor(state.defaultYellowMinutes) : 10;
+        state.layoutMode = ['auto', 'landscape', 'portrait'].includes(state.layoutMode) ? state.layoutMode : 'auto';
+        state.viewMode = ['adult', 'youth'].includes(state.viewMode) ? state.viewMode : 'adult';
+        state.squads = {
+          home: sanitizeSquad(state.squads && state.squads.home),
+          away: sanitizeSquad(state.squads && state.squads.away)
+        };
         
         const commentArea = document.getElementById('matchComment');
-        if (commentArea && state.comment) commentArea.value = state.comment;
+        if (commentArea) commentArea.value = state.comment;
 
         const now = Date.now();
-        const refMs = saved.lastActiveTimestamp || now;
+        const refMs = Number.isFinite(saved.lastActiveTimestamp) ? saved.lastActiveTimestamp : now;
         const diffSec = Math.max(0, Math.floor((now - refMs) / 1000));
 
         if (state.isRunning) {
@@ -1631,21 +1876,25 @@
         clearInterval(pauseInterval);
         state.pauseSeconds = 0;
         startTimerLoop();
+        requestWakeLock();
       }
       saveStateToStorage();
       render();
-
-      if (pendingAppUpdate && !isRefreshingPage) {
-        isRefreshingPage = true;
-        window.location.reload();
-      }
     }
 
     function adjustTime(delta) {
-      state.secondsLeft = Math.max(0, state.secondsLeft + delta);
-      if (!state.hasStarted && state.periodIdx === 0) {
+      if (!state.hasStarted) {
+        state.secondsLeft = Math.max(0, state.secondsLeft + delta);
         state.initialSeconds = state.secondsLeft;
-        state.halfDurationSeconds = state.secondsLeft;
+        if (state.periodIdx === 0) {
+          state.halfDurationSeconds = state.secondsLeft;
+        }
+      } else if (delta > 0) {
+        state.secondsLeft += delta;
+      } else {
+        state.secondsLeft = state.secondsLeft > 0
+          ? Math.max(0, state.secondsLeft + delta)
+          : state.secondsLeft + delta;
       }
       render();
     }
@@ -1688,10 +1937,17 @@
       const elapsed = state.initialSeconds - state.secondsLeft;
       const min = Math.max(1, Math.floor(elapsed / 60) + 1);
       const p = periods[state.periodIdx];
+      const prevSnapshot = {
+        prevPeriodIdx: state.periodIdx,
+        prevSecondsLeft: state.secondsLeft,
+        prevInitialSeconds: state.initialSeconds,
+        prevHasStarted: state.hasStarted
+      };
 
       if (state.periodIdx === 0) {
         state.history.push({
           actionType: 'period',
+          ...prevSnapshot,
           team: 'system', teamName: 'Referee', val: 0,
           type: `Half-time Whistle (${state.homeName} ${state.homeScore}:${state.awayScore} ${state.awayName})`,
           period: p, time: `${min}'`, hScore: state.homeScore, aScore: state.awayScore
@@ -1703,6 +1959,7 @@
       } else if (state.periodIdx === 1) {
         state.history.push({
           actionType: 'period',
+          ...prevSnapshot,
           team: 'system', teamName: 'Referee', val: 0,
           type: `Full-time Whistle (Final: ${state.homeName} ${state.homeScore}:${state.awayScore} ${state.awayName})`,
           period: p, time: `${min}'`, hScore: state.homeScore, aScore: state.awayScore
@@ -1823,6 +2080,15 @@
         if (typeof last.prevHomeSubs === 'number') state.homeSubsCount = last.prevHomeSubs;
         if (typeof last.prevAwaySubs === 'number') state.awaySubsCount = last.prevAwaySubs;
         if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      } else if (last.actionType === 'period' && typeof last.prevPeriodIdx === 'number') {
+        clearInterval(timerInterval);
+        clearInterval(pauseInterval);
+        state.isRunning = false;
+        state.isPaused = false;
+        state.periodIdx = last.prevPeriodIdx;
+        if (Number.isFinite(last.prevSecondsLeft)) state.secondsLeft = last.prevSecondsLeft;
+        if (Number.isFinite(last.prevInitialSeconds)) state.initialSeconds = last.prevInitialSeconds;
+        if (typeof last.prevHasStarted === 'boolean') state.hasStarted = last.prevHasStarted;
       }
 
       showToast(`↩ Undone: ${last.type}`, '#58a6ff', 3000);
@@ -2069,36 +2335,23 @@
       renderSubsModal();
     }
 
+    function selectPlayerEditZone(zone) {
+      playerEditContext.zone = zone;
+      document.getElementById('playerZonePitchBtn').className = 'btn-card-type' + (zone === 'field' ? ' selected-yellow' : '');
+      document.getElementById('playerZoneBenchBtn').className = 'btn-card-type' + (zone === 'bench' ? ' selected-yellow' : '');
+    }
+
     function promptAddCustomPlayer() {
       const tk = state.currentSubsTeam;
       const teamLabel = tk === 'home' ? state.homeName : state.awayName;
-      const numStr = prompt(`Add player for ${teamLabel} — Enter Jersey Number (1–999):`, "");
-      if (!numStr) return;
-      const num = parseJerseyNumber(numStr);
-      if (!num) {
-        showToast("Invalid jersey number (must be 1–999).", "#f85149", 4000);
-        return;
-      }
-      if (state.squads[tk].some(x => x.number === num)) {
-        showToast(`#${num} already exists in ${teamLabel} squad.`, "#e3b341", 4000);
-        return;
-      }
-      const zoneInput = confirm(`Place #${num} directly on the PITCH?\n(Click 'OK' for Active Pitch, 'Cancel' for Bench/Reserve)`);
-      const posName = prompt(`Optional Name / Position for #${num}:`, zoneInput ? `Player ${num}` : `Reserve ${num}`) || `Player ${num}`;
-      state.squads[tk].push({
-        number: num,
-        position: posName,
-        isFrontRow: false,
-        status: zoneInput ? 'field' : 'bench',
-        timerSec: 0,
-        timerType: null,
-        replacedBy: null,
-        yellowCount: 0
-      });
-      state.squads[tk].sort((a, b) => a.number - b.number);
-      saveStateToStorage();
-      renderSubsModal();
-      showToast(`Added #${num} (${posName}) to ${teamLabel}.`, '#2ea043', 3000);
+      playerEditContext = { mode: 'add', teamKey: tk, oldNum: null, zone: 'bench' };
+      document.getElementById('playerEditTitle').textContent = `Add Player — ${teamLabel}`;
+      document.getElementById('playerEditNumInput').value = '';
+      document.getElementById('playerEditPosInput').value = '';
+      document.getElementById('playerEditZoneWrap').style.display = 'flex';
+      selectPlayerEditZone('bench');
+      document.getElementById('playerEditModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('playerEditNumInput').focus(), 60);
     }
 
     function editPlayerNumberOrName(teamKey, oldNum) {
@@ -2106,26 +2359,64 @@
       const p = squad.find(x => x.number === oldNum);
       if (!p) return;
 
-      const newNumStr = prompt(`Edit Jersey Number for #${oldNum} (1–999):`, p.number);
-      if (newNumStr === null) return;
-      const newNum = parseJerseyNumber(newNumStr);
-      if (!newNum) {
-        showToast("Please enter a valid number between 1 and 999.", "#f85149", 3500);
-        return;
-      }
-      if (newNum !== oldNum && squad.some(x => x.number === newNum)) {
-        showToast(`Jersey #${newNum} is already assigned in this team!`, "#f85149", 4000);
+      playerEditContext = { mode: 'edit', teamKey, oldNum, zone: p.status };
+      document.getElementById('playerEditTitle').textContent = `Edit Player #${oldNum}`;
+      document.getElementById('playerEditNumInput').value = p.number;
+      document.getElementById('playerEditPosInput').value = p.position || '';
+      document.getElementById('playerEditZoneWrap').style.display = 'none';
+      document.getElementById('playerEditModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('playerEditNumInput').focus(), 60);
+    }
+
+    function confirmPlayerEdit() {
+      const { mode, teamKey, oldNum, zone } = playerEditContext;
+      const squad = state.squads[teamKey];
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      const num = parseJerseyNumber(document.getElementById('playerEditNumInput').value);
+      const posRaw = document.getElementById('playerEditPosInput').value.trim();
+
+      if (!num) {
+        showToast("Please enter a valid jersey number (1–999).", "#f85149", 3500);
+        document.getElementById('playerEditNumInput').focus();
         return;
       }
 
-      const newPos = prompt(`Edit Position / Name for #${newNum}:`, p.position);
-      p.number = newNum;
-      if (newPos !== null && newPos.trim() !== "") p.position = newPos.trim();
-
-      squad.sort((a, b) => a.number - b.number);
-      saveStateToStorage();
-      renderSubsModal();
-      render();
+      if (mode === 'add') {
+        if (squad.some(x => x.number === num)) {
+          showToast(`#${num} already exists in ${teamLabel} squad.`, "#e3b341", 4000);
+          return;
+        }
+        const posName = posRaw || (zone === 'field' ? `Player ${num}` : `Reserve ${num}`);
+        squad.push({
+          number: num,
+          position: posName,
+          isFrontRow: false,
+          status: zone === 'field' ? 'field' : 'bench',
+          timerSec: 0,
+          timerType: null,
+          replacedBy: null,
+          yellowCount: 0
+        });
+        squad.sort((a, b) => a.number - b.number);
+        closeModal('playerEditModal');
+        saveStateToStorage();
+        renderSubsModal();
+        showToast(`Added #${num} (${posName}) to ${teamLabel}.`, '#2ea043', 3000);
+      } else {
+        const p = squad.find(x => x.number === oldNum);
+        if (!p) { closeModal('playerEditModal'); return; }
+        if (num !== oldNum && squad.some(x => x.number === num)) {
+          showToast(`Jersey #${num} is already assigned in this team!`, "#f85149", 4000);
+          return;
+        }
+        p.number = num;
+        if (posRaw !== '') p.position = posRaw;
+        squad.sort((a, b) => a.number - b.number);
+        closeModal('playerEditModal');
+        saveStateToStorage();
+        renderSubsModal();
+        render();
+      }
     }
 
     function toggleFrontRow(teamKey, playerNum) {
@@ -2228,41 +2519,77 @@
       }
     }
 
-    function promptRowSubOff(teamKey, offNum, defaultReason = 'Tactical') {
-      const availBench = state.squads[teamKey]
-        .filter(p => p.status === 'bench' || p.status === 'tactical_off')
-        .map(p => p.number)
-        .join(', ');
-      const onStr = prompt(
-        `Sub OFF #${offNum} (${defaultReason})\nEnter replacement ON Jersey # (1–999)\nAvailable on bench: ${availBench || 'or enter custom #'}`,
-        ""
-      );
-      if (!onStr) return;
-      const onNum = parseJerseyNumber(onStr);
-      if (!onNum || onNum === offNum) {
-        showToast("Invalid replacement jersey number.", "#f85149", 3500);
-        return;
+    function openRowSubModal(mode, teamKey, fixedNum, defaultReason) {
+      rowSubContext = { mode, teamKey, fixedNum };
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      const numInput = document.getElementById('rowSubNumInput');
+      numInput.value = '';
+      document.getElementById('rowSubReasonSelect').value = defaultReason || 'Tactical';
+
+      let candidates = [];
+      if (mode === 'off') {
+        document.getElementById('rowSubTitle').textContent = `🔄 Sub OFF #${fixedNum} (${teamLabel})`;
+        document.getElementById('rowSubDesc').textContent = `Select or type replacement jersey # coming ON for #${fixedNum}:`;
+        document.getElementById('rowSubInputLabel').textContent = 'ON #';
+        document.getElementById('rowSubChipsLabel').textContent = 'Available on Bench:';
+        candidates = state.squads[teamKey].filter(p => (p.status === 'bench' || p.status === 'tactical_off') && p.number !== fixedNum);
+      } else {
+        document.getElementById('rowSubTitle').textContent = `⬆️ Bring #${fixedNum} ON (${teamLabel})`;
+        document.getElementById('rowSubDesc').textContent = `Select or type jersey # going OFF for #${fixedNum}:`;
+        document.getElementById('rowSubInputLabel').textContent = 'OFF #';
+        document.getElementById('rowSubChipsLabel').textContent = 'Currently on Pitch:';
+        candidates = state.squads[teamKey].filter(p => p.status === 'field' && p.number !== fixedNum);
       }
-      performSubstitution(teamKey, offNum, onNum, defaultReason);
+
+      const chipsEl = document.getElementById('rowSubChips');
+      chipsEl.innerHTML = '';
+      if (candidates.length === 0) {
+        const emptyMsg = document.createElement('span');
+        emptyMsg.style.cssText = 'font-size:0.74rem; color:var(--text-muted);';
+        emptyMsg.textContent = 'No candidates listed — type any custom # (1–999) above.';
+        chipsEl.appendChild(emptyMsg);
+      } else {
+        candidates.forEach(p => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'btn-jersey-chip';
+          chip.textContent = `#${p.number}`;
+          chip.addEventListener('click', () => {
+            numInput.value = p.number;
+            chipsEl.querySelectorAll('.btn-jersey-chip').forEach(b => b.classList.remove('selected'));
+            chip.classList.add('selected');
+          });
+          chipsEl.appendChild(chip);
+        });
+      }
+
+      document.getElementById('rowSubModal').style.display = 'flex';
+      setTimeout(() => numInput.focus(), 60);
+    }
+
+    function promptRowSubOff(teamKey, offNum, defaultReason = 'Tactical') {
+      openRowSubModal('off', teamKey, offNum, defaultReason);
     }
 
     function promptRowSubOn(teamKey, onNum) {
-      const activePitch = state.squads[teamKey]
-        .filter(p => p.status === 'field')
-        .map(p => p.number)
-        .join(', ');
-      const offStr = prompt(
-        `Bring #${onNum} ONTO pitch\nEnter Jersey # going OFF (1–999)\nCurrently on pitch: ${activePitch}`,
-        ""
-      );
-      if (!offStr) return;
-      const offNum = parseJerseyNumber(offStr);
-      if (!offNum || offNum === onNum) {
-        showToast("Invalid jersey number.", "#f85149", 3500);
+      const reason = document.getElementById('quickSubReason').value || 'Tactical';
+      openRowSubModal('on', teamKey, onNum, reason);
+    }
+
+    function confirmRowSub() {
+      const { mode, teamKey, fixedNum } = rowSubContext;
+      const otherNum = parseJerseyNumber(document.getElementById('rowSubNumInput').value);
+      const reason = document.getElementById('rowSubReasonSelect').value || 'Tactical';
+      if (!otherNum || otherNum === fixedNum) {
+        showToast("Please enter a valid jersey number (1–999) different from #" + fixedNum + ".", "#f85149", 3500);
+        document.getElementById('rowSubNumInput').focus();
         return;
       }
-      const reason = document.getElementById('quickSubReason').value || 'Tactical';
-      performSubstitution(teamKey, offNum, onNum, reason);
+      const offNum = mode === 'off' ? fixedNum : otherNum;
+      const onNum = mode === 'off' ? otherNum : fixedNum;
+      if (performSubstitution(teamKey, offNum, onNum, reason)) {
+        closeModal('rowSubModal');
+      }
     }
 
     function returnTempPlayerToPitch(teamKey, returningNum) {
@@ -2326,8 +2653,9 @@
 
         const m = Math.floor((p.timerSec || 0) / 60);
         const s = String((p.timerSec || 0) % 60).padStart(2, '0');
-        const timeStr = p.timerSec > 0 ? ` (${m}:${s})` : '';
+        const timeSpan = p.timerSec > 0 ? ` (<span data-sub-timer="${tk}_${p.number}">${m}:${s}</span>)` : '';
         const yBadge = p.yellowCount === 1 ? `<span title="1 Yellow Card" style="font-size:0.65rem;">🟨</span>` : '';
+        const safePos = escapeHtml(p.position);
 
         if (p.status === 'field') {
           pitchCount++;
@@ -2336,7 +2664,7 @@
             <div class="player-meta">
               <span class="player-num" onclick="editPlayerNumberOrName('${tk}', ${p.number})" title="Tap to edit jersey # (1-999) or name">#${p.number}</span>
               <span class="fr-badge ${p.isFrontRow ? 'active' : ''}" onclick="toggleFrontRow('${tk}', ${p.number})" title="Toggle Front Row status">FR</span>
-              <strong style="font-size:0.76rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.position} ${yBadge}</strong>
+              <strong style="font-size:0.76rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safePos} ${yBadge}</strong>
             </div>
             <div class="player-actions">
               <button class="btn-action-small" style="border-color:#388bfd; color:#79c0ff;" onclick="promptRowSubOff('${tk}', ${p.number}, 'Tactical')" title="Tactical Sub Off">🔄 Sub</button>
@@ -2365,23 +2693,23 @@
             statusHtml = `<span class="status-tag tactical">Tactical Off</span>`;
             actionHtml = `<button class="btn-action-small" style="border-color:#388bfd; color:#79c0ff;" onclick="promptRowSubOn('${tk}', ${p.number})" title="Law 3.33 Return">⬆️ Return</button>`;
           } else if (p.status === 'blood_bin') {
-            statusHtml = `<span class="status-tag temp">🩸 Blood${timeStr}</span>`;
+            statusHtml = `<span class="status-tag temp">🩸 Blood${timeSpan}</span>`;
             actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="returnTempPlayerToPitch('${tk}', ${p.number})">↩ Return</button>`;
           } else if (p.status === 'hia_bin') {
-            statusHtml = `<span class="status-tag temp">🧠 HIA${timeStr}</span>`;
+            statusHtml = `<span class="status-tag temp">🧠 HIA${timeSpan}</span>`;
             actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="returnTempPlayerToPitch('${tk}', ${p.number})">↩ Return</button>`;
           } else if (p.status === 'sinbin') {
             if (p.timerType === 'YellowReview') {
-              statusHtml = `<span class="status-tag review">🟨➔🟥 Review${timeStr}</span>`;
+              statusHtml = `<span class="status-tag review">🟨➔🟥 Review${timeSpan}</span>`;
               actionHtml = `<button class="btn-action-small" style="color:#f85149;" onclick="upgradeYellowToRed('${tk}', ${p.number})">🟥 Upgrade</button>
                             <button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">End ✕</button>`;
             } else {
-              statusHtml = `<span class="status-tag sinbin">🟨 Sin Bin${timeStr}</span>`;
+              statusHtml = `<span class="status-tag sinbin">🟨 Sin Bin${timeSpan}</span>`;
               actionHtml = `<button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">End ✕</button>`;
             }
           } else if (p.status === 'red_card') {
             if (p.timerType === 'Red20' && p.timerSec > 0) {
-              statusHtml = `<span class="status-tag redcard">🟥 20m Red${timeStr}</span>`;
+              statusHtml = `<span class="status-tag redcard">🟥 20m Red${timeSpan}</span>`;
               actionHtml = `<button class="btn-action-small" onclick="cancelTimerEarly('${tk}', ${p.number})">Clear ✕</button>`;
             } else {
               statusHtml = `<span class="status-tag redcard">🟥 Sent Off</span>`;
@@ -2394,7 +2722,7 @@
             <div class="player-meta">
               <span class="player-num" onclick="editPlayerNumberOrName('${tk}', ${p.number})" title="Tap to edit jersey # (1-999) or name">#${p.number}</span>
               <span class="fr-badge ${p.isFrontRow ? 'active' : ''}" onclick="toggleFrontRow('${tk}', ${p.number})" title="Toggle Front Row status">FR</span>
-              <strong style="font-size:0.74rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.position} ${yBadge}</strong>
+              <strong style="font-size:0.74rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safePos} ${yBadge}</strong>
             </div>
             <div class="player-actions">
               ${statusHtml}
@@ -2407,6 +2735,20 @@
 
       document.getElementById('pitchCountLabel').textContent = pitchCount;
       document.getElementById('benchCountLabel').textContent = benchCount;
+    }
+
+    function updateSubsModalTimersOnly() {
+      const tk = state.currentSubsTeam;
+      state.squads[tk].forEach(p => {
+        if (p.timerSec > 0) {
+          const span = document.querySelector(`[data-sub-timer="${tk}_${p.number}"]`);
+          if (span) {
+            const m = Math.floor(p.timerSec / 60);
+            const s = String(p.timerSec % 60).padStart(2, '0');
+            span.textContent = `${m}:${s}`;
+          }
+        }
+      });
     }
 
     /* Coin Toss (Law 6.3) */
@@ -2517,53 +2859,7 @@
       return `${s.t}T${ptPart} ${s.c}C ${s.p}P ${s.d}D`;
     }
 
-    function render() {
-      document.getElementById('homeName').textContent = state.homeName;
-      document.getElementById('awayName').textContent = state.awayName;
-      document.getElementById('homeScore').textContent = state.homeScore;
-      document.getElementById('awayScore').textContent = state.awayScore;
-      document.getElementById('homeName').style.color = state.homeColor;
-      document.getElementById('homeScore').style.color = state.homeColor;
-      document.getElementById('awayName').style.color = state.awayColor;
-      document.getElementById('awayScore').style.color = state.awayColor;
-
-      const hDot = document.getElementById('homeColorDot');
-      const aDot = document.getElementById('awayColorDot');
-      if (hDot) hDot.style.backgroundColor = state.homeColor;
-      if (aDot) aDot.style.backgroundColor = state.awayColor;
-
-      const hp = document.querySelector('.team-panel.home');
-      const ap = document.querySelector('.team-panel.away');
-      if (hp) { 
-        const hSec = getSecondaryColor(state.homeColor, 0.78);
-        const hPt = getSecondaryColor(state.homeColor, 0.54);
-        hp.style.setProperty('--home-team-bg', state.homeColor); 
-        hp.style.setProperty('--home-team-sec', hSec);
-        hp.style.setProperty('--home-team-pt', hPt);
-        hp.style.setProperty('--home-team-text', getContrastColor(state.homeColor));
-        hp.style.setProperty('--home-team-pt-text', getContrastColor(hPt));
-        hp.style.borderColor = state.homeColor; 
-      }
-      if (ap) { 
-        const aSec = getSecondaryColor(state.awayColor, 0.78);
-        const aPt = getSecondaryColor(state.awayColor, 0.54);
-        ap.style.setProperty('--away-team-bg', state.awayColor); 
-        ap.style.setProperty('--away-team-sec', aSec);
-        ap.style.setProperty('--away-team-pt', aPt);
-        ap.style.setProperty('--away-team-text', getContrastColor(state.awayColor));
-        ap.style.setProperty('--away-team-pt-text', getContrastColor(aPt));
-        ap.style.borderColor = state.awayColor; 
-      }
-
-      document.getElementById('homeStats').textContent = formatStatsText(state.homeStats);
-      document.getElementById('awayStats').textContent = formatStatsText(state.awayStats);
-      document.getElementById('periodBtn').textContent = periods[state.periodIdx];
-      document.getElementById('histCount').textContent = state.history.length;
-      document.getElementById('defaultYellowDurationLabel').textContent = `Dur: ${state.defaultYellowMinutes}m ✎`;
-
-      const lines = state.comment.trim() ? state.comment.trim().split('\n').length : 0;
-      document.getElementById('notesCountBadge').textContent = lines;
-
+    function updateClockUI() {
       const isNeg = state.secondsLeft < 0;
       const absSec = Math.abs(state.secondsLeft);
       const m = String(Math.floor(absSec / 60)).padStart(2, '0');
@@ -2581,28 +2877,118 @@
       } else {
         tBtn.textContent = "START"; tBtn.style.background = "var(--accent)";
       }
+    }
+
+    function renderTickOnly() {
+      updateClockUI();
+      renderCardBadges(false);
+    }
+
+    function render() {
+      document.getElementById('homeName').textContent = state.homeName;
+      document.getElementById('awayName').textContent = state.awayName;
+      document.getElementById('homeScore').textContent = state.homeScore;
+      document.getElementById('awayScore').textContent = state.awayScore;
+
+      const homeTextCol = getReadableOnDark(state.homeColor);
+      const awayTextCol = getReadableOnDark(state.awayColor);
+      document.getElementById('homeName').style.color = homeTextCol;
+      document.getElementById('homeScore').style.color = homeTextCol;
+      document.getElementById('awayName').style.color = awayTextCol;
+      document.getElementById('awayScore').style.color = awayTextCol;
+
+      const hDot = document.getElementById('homeColorDot');
+      const aDot = document.getElementById('awayColorDot');
+      if (hDot) hDot.style.backgroundColor = state.homeColor;
+      if (aDot) aDot.style.backgroundColor = state.awayColor;
+
+      const hp = document.querySelector('.team-panel.home');
+      const ap = document.querySelector('.team-panel.away');
+      if (hp) { 
+        const hSec = getSecondaryColor(state.homeColor, 0.78);
+        const hPt = getSecondaryColor(state.homeColor, 0.54);
+        hp.style.setProperty('--home-team-bg', state.homeColor); 
+        hp.style.setProperty('--home-team-sec', hSec);
+        hp.style.setProperty('--home-team-pt', hPt);
+        hp.style.setProperty('--home-team-text', getContrastColor(state.homeColor));
+        hp.style.setProperty('--home-team-pt-text', getContrastColor(hPt));
+        hp.style.borderColor = getHexLuminance(state.homeColor) < 40 ? '#484f58' : state.homeColor; 
+      }
+      if (ap) { 
+        const aSec = getSecondaryColor(state.awayColor, 0.78);
+        const aPt = getSecondaryColor(state.awayColor, 0.54);
+        ap.style.setProperty('--away-team-bg', state.awayColor); 
+        ap.style.setProperty('--away-team-sec', aSec);
+        ap.style.setProperty('--away-team-pt', aPt);
+        ap.style.setProperty('--away-team-text', getContrastColor(state.awayColor));
+        ap.style.setProperty('--away-team-pt-text', getContrastColor(aPt));
+        ap.style.borderColor = getHexLuminance(state.awayColor) < 40 ? '#484f58' : state.awayColor; 
+      }
+
+      document.getElementById('homeStats').textContent = formatStatsText(state.homeStats);
+      document.getElementById('awayStats').textContent = formatStatsText(state.awayStats);
+      document.getElementById('periodBtn').textContent = periods[state.periodIdx];
+      document.getElementById('histCount').textContent = state.history.length;
+      document.getElementById('defaultYellowDurationLabel').textContent = `Dur: ${state.defaultYellowMinutes}m ✎`;
+
+      const lines = state.comment.trim() ? state.comment.trim().split('\n').length : 0;
+      document.getElementById('notesCountBadge').textContent = lines;
+
+      updateClockUI();
 
       const ehBtn = document.getElementById('endHalfBtn');
       if (ehBtn) {
         ehBtn.textContent = state.periodIdx === 0 ? "🏁 End 1st Half" : (state.periodIdx === 1 ? "🏁 Full Time" : "🏁 Finished");
       }
 
-      renderCardBadges();
+      renderCardBadges(false);
       saveStateToStorage();
     }
 
-    function renderCardBadges() {
+    function renderCardBadges(forceRebuild = false) {
       const hl = document.getElementById('homeTimersList');
       const al = document.getElementById('awayTimersList');
-      if (hl) hl.innerHTML = '';
-      if (al) al.innerHTML = '';
+      const sigParts = [];
       let activeCount = 0;
 
       ['home', 'away'].forEach(tk => {
-        const c = tk === 'home' ? hl : al;
         state.squads[tk].forEach(p => {
           if (p.timerSec > 0) {
             activeCount++;
+            sigParts.push(`${tk}:${p.number}:${p.timerType || ''}`);
+          }
+        });
+      });
+
+      const sig = sigParts.join('|');
+      const badge = document.getElementById('activeTimersCount');
+      if (badge) badge.textContent = activeCount;
+
+      if (!forceRebuild && sig === lastBadgesSignature) {
+        ['home', 'away'].forEach(tk => {
+          state.squads[tk].forEach(p => {
+            if (p.timerSec > 0) {
+              const span = document.querySelector(`[data-pill-time="${tk}_${p.number}"]`);
+              if (span) {
+                const m = Math.floor(p.timerSec / 60);
+                const s = String(p.timerSec % 60).padStart(2, '0');
+                span.textContent = `${m}:${s}`;
+              }
+            }
+          });
+        });
+        return;
+      }
+
+      lastBadgesSignature = sig;
+      if (hl) hl.innerHTML = '';
+      if (al) al.innerHTML = '';
+
+      ['home', 'away'].forEach(tk => {
+        const c = tk === 'home' ? hl : al;
+        if (!c) return;
+        state.squads[tk].forEach(p => {
+          if (p.timerSec > 0) {
             const pill = document.createElement('div');
             let pillClass = 'sinbin';
             let icon = '🟨';
@@ -2615,17 +3001,17 @@
             const m = Math.floor(p.timerSec / 60);
             const s = String(p.timerSec % 60).padStart(2, '0');
             pill.innerHTML = `
-              <span>${icon} <strong>#${p.number}</strong> ${m}:${s}</span>
+              <span>${icon} <strong>#${p.number}</strong> <span data-pill-time="${tk}_${p.number}">${m}:${s}</span></span>
               <div class="timer-pill-adjust">
-                <button class="btn-pill-small" onclick="adjustSpecificTimer('${tk}', ${p.number}, -60)">-1m</button>
-                <button class="btn-pill-small" onclick="adjustSpecificTimer('${tk}', ${p.number}, 60)">+1m</button>
-                <button class="btn-pill-small" style="color:#f85149;" onclick="cancelTimerEarly('${tk}', ${p.number})">✕</button>
+                <button type="button" class="btn-pill-small" onclick="adjustSpecificTimer('${tk}', ${p.number}, -60)">-1m</button>
+                <button type="button" class="btn-pill-small" onclick="adjustSpecificTimer('${tk}', ${p.number}, 60)">+1m</button>
+                <button type="button" class="btn-pill-small" style="color:#f85149;" onclick="cancelTimerEarly('${tk}', ${p.number})">✕</button>
               </div>
             `;
             if (p.timerType === 'SinBin' || p.timerType === 'YellowReview') {
               bindPressHold(
                 pill,
-                () => {},
+                null,
                 () => upgradeYellowToRed(tk, p.number)
               );
             }
@@ -2633,8 +3019,6 @@
           }
         });
       });
-      const badge = document.getElementById('activeTimersCount');
-      if (badge) badge.textContent = activeCount;
     }
 
     /* === Dynamic Canvas Match Sheet with Word Wrapping === */
@@ -2662,16 +3046,33 @@
       const canvas = document.getElementById('shareCanvas');
       const ctx = canvas.getContext('2d');
 
+      const homeColorCanvas = getReadableOnDark(state.homeColor);
+      const awayColorCanvas = getReadableOnDark(state.awayColor);
+
       ctx.font = '14px sans-serif';
       const commentText = state.comment.trim() || 'No special incidents reported.';
       const wrappedNotes = wrapCanvasLines(ctx, commentText, 790);
 
+      ctx.font = '14px monospace';
+      const wrappedHistory = [];
+      if (state.history.length === 0) {
+        wrappedHistory.push({ color: '#8b949e', text: 'No match events recorded.' });
+      } else {
+        state.history.forEach(h => {
+          const col = h.team === 'home' ? homeColorCanvas : (h.team === 'away' ? awayColorCanvas : '#d29922');
+          const fullLine = `• ${h.time} [${h.period}] ${h.teamName}: ${h.type} ➜ ${h.hScore}:${h.aScore}`;
+          const subLines = wrapCanvasLines(ctx, fullLine, 790);
+          subLines.forEach((sl, idx) => {
+            wrappedHistory.push({ color: col, text: idx === 0 ? sl : `  ${sl}` });
+          });
+        });
+      }
+
       const headerHeight = 95;
       const scoreBoxHeight = 170;
       const gap = 18;
-      const historyCount = Math.max(1, state.history.length);
-      const histLineHeight = 24;
-      const histBoxHeight = 55 + (historyCount * histLineHeight);
+      const histLineHeight = 22;
+      const histBoxHeight = 56 + (wrappedHistory.length * histLineHeight);
       const commentBoxHeight = 55 + (wrappedNotes.length * 22);
 
       canvas.width = 900;
@@ -2682,6 +3083,7 @@
 
       ctx.strokeStyle = '#30363d';
       ctx.lineWidth = 2;
+      ctx.textAlign = 'left';
 
       ctx.fillStyle = '#58a6ff';
       ctx.font = 'bold 24px sans-serif';
@@ -2697,19 +3099,26 @@
       ctx.strokeRect(32, yPos, 836, scoreBoxHeight);
 
       ctx.font = 'bold 28px sans-serif';
-      ctx.fillStyle = state.homeColor;
-      ctx.fillText(state.homeName, 55, yPos + 45);
-      ctx.fillStyle = state.awayColor;
-      ctx.fillText(state.awayName, 580, yPos + 45);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = homeColorCanvas;
+      ctx.fillText(state.homeName, 55, yPos + 45, 270);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = awayColorCanvas;
+      ctx.fillText(state.awayName, 845, yPos + 45, 270);
 
       ctx.font = '15px sans-serif';
       ctx.fillStyle = '#8b949e';
-      ctx.fillText(formatStatsText(state.homeStats), 55, yPos + 72);
-      ctx.fillText(formatStatsText(state.awayStats), 580, yPos + 72);
+      ctx.textAlign = 'left';
+      ctx.fillText(formatStatsText(state.homeStats), 55, yPos + 72, 270);
+      ctx.textAlign = 'right';
+      ctx.fillText(formatStatsText(state.awayStats), 845, yPos + 72, 270);
 
+      ctx.textAlign = 'center';
       ctx.font = 'bold 64px sans-serif';
       ctx.fillStyle = '#f0f6fc';
-      ctx.fillText(`${state.homeScore} : ${state.awayScore}`, 355, yPos + 105);
+      ctx.fillText(`${state.homeScore} : ${state.awayScore}`, 450, yPos + 118, 300);
+      ctx.textAlign = 'left';
 
       yPos += scoreBoxHeight + gap;
       ctx.fillStyle = '#161b22';
@@ -2722,16 +3131,11 @@
 
       ctx.font = '14px monospace';
       let hy = yPos + 60;
-      if (state.history.length === 0) {
-        ctx.fillStyle = '#8b949e';
-        ctx.fillText('No match events recorded.', 55, hy);
-      } else {
-        state.history.forEach(h => {
-          ctx.fillStyle = h.team === 'home' ? state.homeColor : (h.team === 'away' ? state.awayColor : '#d29922');
-          ctx.fillText(`• ${h.time} [${h.period}] ${h.teamName}: ${h.type} ➜ ${h.hScore}:${h.aScore}`, 55, hy);
-          hy += histLineHeight;
-        });
-      }
+      wrappedHistory.forEach(item => {
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, 55, hy);
+        hy += histLineHeight;
+      });
 
       yPos += histBoxHeight + gap;
       ctx.fillStyle = '#161b22';
@@ -2763,9 +3167,22 @@
     function shareImage() {
       const c = document.getElementById('shareCanvas');
       c.toBlob(b => {
-        if (navigator.share && b) {
-          navigator.share({ files: [new File([b], 'score.png', { type: 'image/png' })], text: buildReportText() }).catch(()=>{});
-        } else { downloadImage(); }
+        if (!b) {
+          showToast('Could not generate report image.', '#f85149', 4000);
+          return;
+        }
+        const file = new File([b], `match-${state.homeScore}-${state.awayScore}.png`, { type: 'image/png' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], text: buildReportText() }).catch((err) => {
+            if (!err || err.name !== 'AbortError') {
+              downloadImage();
+              showToast('Image downloaded (direct sharing unavailable).', '#58a6ff', 3500);
+            }
+          });
+        } else {
+          downloadImage();
+          showToast('Image saved (browser does not support direct image sharing).', '#58a6ff', 3500);
+        }
       });
     }
     function downloadImage() {
@@ -2774,14 +3191,41 @@
       a.href = document.getElementById('shareCanvas').toDataURL();
       a.click();
     }
-    function copyShareText() { navigator.clipboard.writeText(buildReportText()).then(() => showToast('Report copied to clipboard!', '#2ea043', 3000)); }
+    function fallbackCopyText(text) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) showToast('Report copied to clipboard!', '#2ea043', 3000);
+        else showToast('Copy failed – please use WhatsApp Text or Save Image.', '#f85149', 4000);
+      } catch (e) {
+        showToast('Copy failed – please use WhatsApp Text or Save Image.', '#f85149', 4000);
+      }
+    }
+    function copyShareText() {
+      const text = buildReportText();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(() => showToast('Report copied to clipboard!', '#2ea043', 3000))
+          .catch(() => fallbackCopyText(text));
+      } else {
+        fallbackCopyText(text);
+      }
+    }
 
     function triggerAirhornShort3() { playTone([0.14, 0.14, 0.14]); }
     function triggerAirhorn() { playTone([0.35, 0.35, 0.85]); }
     function playTone(durs) {
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
         let cur = audioCtx.currentTime;
         durs.forEach(d => {
           [116, 233, 293, 349, 466].forEach(f => {
@@ -2813,14 +3257,17 @@
       pendingTimeModalYellowMin = autoYellowMin;
     }
     function saveTimeModal() {
-      const m = parseInt(document.getElementById('modalMin').value, 10) || 0;
-      const s = parseInt(document.getElementById('modalSec').value, 10) || 0;
+      const m = Math.max(0, Math.min(90, parseInt(document.getElementById('modalMin').value, 10) || 0));
+      const s = Math.max(0, Math.min(59, parseInt(document.getElementById('modalSec').value, 10) || 0));
       const total = m * 60 + s;
-      state.secondsLeft = total; state.initialSeconds = total;
-      if (!state.hasStarted || state.periodIdx === 0) state.halfDurationSeconds = total;
+      state.secondsLeft = total;
+      if (!state.hasStarted) {
+        state.initialSeconds = total;
+        if (state.periodIdx === 0) state.halfDurationSeconds = total;
+      }
       if (pendingTimeModalYellowMin) {
         state.defaultYellowMinutes = pendingTimeModalYellowMin;
-      } else if (m === 7) {
+      } else if (!state.hasStarted && m === 7) {
         state.defaultYellowMinutes = 2;
       }
       closeModal('timeModal');
@@ -2829,7 +3276,7 @@
     function openHistoryModal() {
       const el = document.getElementById('histList');
       el.innerHTML = state.history.length === 0 ? '<div style="color:var(--text-muted);text-align:center;">No match events yet.</div>' :
-        state.history.map(h => `<div class="history-item"><span><strong>${h.time}</strong> [${h.period}] ${h.teamName}: ${h.type}</span><strong>${h.hScore}:${h.aScore}</strong></div>`).join('');
+        state.history.map(h => `<div class="history-item"><span><strong>${escapeHtml(h.time)}</strong> [${escapeHtml(h.period)}] ${escapeHtml(h.teamName)}: ${escapeHtml(h.type)}</span><strong>${escapeHtml(h.hScore)}:${escapeHtml(h.aScore)}</strong></div>`).join('');
       document.getElementById('histModal').style.display = 'flex';
     }
     function promptResetAll() { document.getElementById('resetModal').style.display = 'flex'; }
@@ -2860,24 +3307,51 @@
       state.homeSubsCount = 0;
       state.awaySubsCount = 0;
       state.squads = { home: generateSquad(), away: generateSquad() };
+      lastBadgesSignature = '';
 
       const commentEl = document.getElementById('matchComment');
       if (commentEl) commentEl.value = "";
       
       saveStateToStorage();
       render();
+
+      if (pendingAppUpdate && !isRefreshingPage) {
+        isRefreshingPage = true;
+        window.location.reload();
+      }
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openConfirmActionModal(title, desc, onConfirm) {
+      pendingConfirmCallback = onConfirm;
+      document.getElementById('confirmActionTitle').textContent = title;
+      document.getElementById('confirmActionDesc').textContent = desc;
+      document.getElementById('confirmActionModal').style.display = 'flex';
+    }
+    function executePendingConfirmAction() {
+      const cb = pendingConfirmCallback;
+      pendingConfirmCallback = null;
+      closeModal('confirmActionModal');
+      if (typeof cb === 'function') cb();
+    }
     function editTeam(t) {
+      teamNameEditTarget = t;
       const current = t === 'home' ? state.homeName : state.awayName;
-      const v = prompt("Team Name:", current);
-      if (v && v.trim()) { 
-        if (t === 'home') state.homeName = v.trim(); 
-        else state.awayName = v.trim(); 
+      document.getElementById('teamNameModalTitle').textContent = t === 'home' ? 'Edit Home Team Name' : 'Edit Away Team Name';
+      const inp = document.getElementById('teamNameInput');
+      inp.value = current;
+      document.getElementById('teamNameModal').style.display = 'flex';
+      setTimeout(() => { inp.focus(); inp.select(); }, 60);
+    }
+    function confirmTeamName() {
+      const v = document.getElementById('teamNameInput').value.trim();
+      if (v) {
+        if (teamNameEditTarget === 'home') state.homeName = v;
+        else state.awayName = v;
         saveStateToStorage();
-        render(); 
+        render();
       }
+      closeModal('teamNameModal');
     }
     function saveComment() { 
       state.comment = document.getElementById('matchComment').value; 
@@ -2885,13 +3359,17 @@
       const lines = state.comment.trim() ? state.comment.trim().split('\n').length : 0;
       document.getElementById('notesCountBadge').textContent = lines;
     }
-    function clearComment() { 
-      if (confirm("Clear match notes?")) { 
-        document.getElementById('matchComment').value = ""; 
-        state.comment = ""; 
-        saveStateToStorage(); 
-        document.getElementById('notesCountBadge').textContent = '0';
-      } 
+    function clearComment() {
+      openConfirmActionModal(
+        'Clear Match Notes?',
+        'All referee notes and incident texts will be deleted.',
+        () => {
+          document.getElementById('matchComment').value = "";
+          state.comment = "";
+          saveStateToStorage();
+          document.getElementById('notesCountBadge').textContent = '0';
+        }
+      );
     }
     function appendTimestampToComment() {
       const min = Math.max(1, Math.floor((state.initialSeconds - state.secondsLeft)/60)+1);
@@ -2930,8 +3408,26 @@
 
     let wakeLock = null;
     async function requestWakeLock() {
-      try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+      try {
+        if (!('wakeLock' in navigator)) return;
+        if (wakeLock && !wakeLock.released) return;
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      } catch (err) {}
     }
+
+    document.getElementById('teamNameInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmTeamName();
+    });
+    document.getElementById('playerEditNumInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmPlayerEdit();
+    });
+    document.getElementById('playerEditPosInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmPlayerEdit();
+    });
+    document.getElementById('rowSubNumInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmRowSub();
+    });
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
