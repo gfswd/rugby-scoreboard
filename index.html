@@ -82,7 +82,7 @@
     /* === TOAST NOTIFICATIONS (Non-blocking alerts) === */
     .toast-container {
       position: fixed;
-      top: calc(46px + env(safe-area-inset-top, 0px));
+      top: calc(52px + env(safe-area-inset-top, 0px));
       left: 50%;
       transform: translateX(-50%);
       z-index: 300;
@@ -118,26 +118,26 @@
     header {
       background: var(--card-bg);
       border-bottom: 1px solid var(--border);
-      padding: calc(5px + env(safe-area-inset-top, 0px)) max(6px, env(safe-area-inset-right, 0px)) 5px max(6px, env(safe-area-inset-left, 0px));
+      padding: calc(6px + env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) 6px max(8px, env(safe-area-inset-left, 0px));
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
-      gap: 4px;
+      gap: 6px;
       width: 100%;
-      min-height: calc(40px + env(safe-area-inset-top, 0px));
+      min-height: calc(48px + env(safe-area-inset-top, 0px));
       overflow: hidden;
     }
     .header-left, .header-right {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       min-width: 0;
     }
     .period-badge {
-      background: #21262d; border: 1px solid var(--border); padding: 0 8px;
-      height: 30px; display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 15px; font-weight: 700; font-size: 0.74rem; cursor: pointer;
+      background: #21262d; border: 1px solid var(--border); padding: 0 12px;
+      height: 36px; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 18px; font-weight: 800; font-size: 0.82rem; cursor: pointer;
       color: #58a6ff; white-space: nowrap; flex-shrink: 0;
     }
     .btn-header {
@@ -146,32 +146,28 @@
       white-space: nowrap;
     }
     header .btn-header {
-      height: 30px; padding: 0 7px; font-size: 0.72rem;
+      height: 36px; padding: 0 12px; font-size: 0.82rem; font-weight: 700;
+      border-radius: 7px;
       display: inline-flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .btn-show-card {
-      width: 22px; height: 28px; border-radius: 4px; border: 1.5px solid rgba(255,255,255,0.35);
-      display: inline-flex; align-items: center; justify-content: center;
-      flex-shrink: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28);
-    }
-    .btn-show-card.yellow { background: #facc15; color: #111827; }
-    .btn-show-card.red { background: #dc2626; color: #ffffff; }
     .btn-menu {
       background: #21262d; border: 1px solid var(--border); color: #f0f6fc;
-      font-size: 1.05rem; width: 32px; height: 30px; padding: 0; border-radius: 6px;
+      font-size: 1.2rem; width: 40px; height: 36px; padding: 0; border-radius: 7px;
       display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    @media (max-width: 440px) {
-      header { gap: 3px; }
-      .header-left, .header-right { gap: 3px; }
-      .period-badge { padding: 0 6px; font-size: 0.7rem; }
-      header .btn-header { padding: 0 5px; font-size: 0.69rem; }
-      .btn-show-card { width: 20px; height: 27px; }
-      .btn-menu { width: 30px; height: 30px; font-size: 1rem; }
+    @media (max-width: 430px) {
+      header { padding-left: max(6px, env(safe-area-inset-left, 0px)); padding-right: max(6px, env(safe-area-inset-right, 0px)); gap: 5px; }
+      .header-left, .header-right { gap: 5px; }
+      .period-badge { padding: 0 10px; height: 34px; font-size: 0.78rem; }
+      header .btn-header { padding: 0 10px; height: 34px; font-size: 0.78rem; }
+      .btn-menu { width: 38px; height: 34px; font-size: 1.15rem; }
     }
-    @media (max-width: 355px) {
-      .hdr-txt-xs { display: none; }
+    @media (max-width: 375px) {
+      header, .header-left, .header-right { gap: 4px; }
+      .period-badge { padding: 0 8px; font-size: 0.74rem; }
+      header .btn-header { padding: 0 8px; font-size: 0.74rem; }
+      .btn-menu { width: 35px; font-size: 1.08rem; }
     }
 
     /* === MAIN SCOREBOARD CONTAINER === */
@@ -345,27 +341,53 @@
     }
     .btn-end-half:active { background: #d29922; color: #000; }
 
-    /* Quick Cards Panel */
+    /* Prominent Cards Panel (Fullscreen Card -> Log Modal) */
     .cards-quick-box {
-      width: 100%; background: #1b1913; border: 1px solid rgba(227, 179, 65, 0.4);
-      border-radius: 5px; padding: 4px 5px; display: flex; flex-direction: column; gap: 3px;
+      width: 100%; background: #17150f; border: 1px solid rgba(227, 179, 65, 0.38);
+      border-radius: 7px; padding: 5px 6px; display: flex; flex-direction: column; gap: 5px;
     }
     .cards-header {
       display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.64rem; font-weight: bold; color: var(--card-yellow);
+      font-size: 0.68rem; font-weight: 700; color: var(--card-yellow);
     }
-    .cards-quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
-    .btn-card-add {
-      background: #2a2412; border: 1px solid rgba(227, 179, 65, 0.5); color: #fce881;
-      padding: 4px 2px; border-radius: 4px; font-size: 0.68rem; font-weight: 700;
+    .cards-quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .btn-card-prominent {
+      min-height: 44px; padding: 6px 6px; border-radius: 7px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      font-weight: 900; line-height: 1.1;
       transition: transform 0.12s, background 0.12s, border-color 0.12s;
     }
-    .btn-card-add.holding-review {
+    .btn-card-prominent:active { transform: scale(0.97); }
+    .btn-card-prominent.yellow {
+      background: #29220e; border: 2px solid #facc15; color: #fde047;
+    }
+    .btn-card-prominent.red {
+      background: #dc2626; border: 2px solid #ef4444; color: #ffffff;
+    }
+    .btn-card-prominent.holding-review {
       background: #7f1d1d !important;
       border-color: #ef4444 !important;
-      color: #fff !important;
+      color: #ffffff !important;
       transform: scale(0.96);
     }
+    .card-btn-main {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      font-size: clamp(0.8rem, 1.75vh, 0.94rem); letter-spacing: 0.3px; white-space: nowrap;
+    }
+    .card-btn-sub {
+      font-size: 0.6rem; font-weight: 600; opacity: 0.85; white-space: nowrap;
+    }
+    .card-swatch {
+      width: 10px; height: 14px; border-radius: 2px; display: inline-block; flex-shrink: 0;
+    }
+    .card-swatch.yellow { background: #facc15; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); }
+    .card-swatch.red { background: #ffffff; opacity: 0.92; box-shadow: 0 0 0 1px rgba(0,0,0,0.2); }
+    body.mode-landscape .card-word-wide,
+    body.mode-auto:not(.is-portrait) .card-word-wide { display: none; }
+    body.mode-landscape .btn-card-prominent,
+    body.mode-auto:not(.is-portrait) .btn-card-prominent { min-height: 40px; padding: 5px 3px; }
+    body.mode-landscape .card-btn-main,
+    body.mode-auto:not(.is-portrait) .card-btn-main { font-size: 0.78rem; gap: 4px; }
 
     .btn-quick-note {
       width: 100%; background: #0d1117; border: 1px dashed #30363d; border-radius: 5px;
@@ -666,13 +688,11 @@
   <header>
     <div class="header-left">
       <button class="period-badge" id="periodBtn" onclick="togglePeriod()">1st Half</button>
-      <button class="btn-header" onclick="undoLast()" title="Undo Last Action">↩<span class="hdr-txt-xs">&nbsp;Undo</span></button>
-      <button class="btn-header adult-only" onclick="openSubsModal()" title="Substitutions & Cards">🔄<span class="hdr-txt-xs">&nbsp;Subs</span>&nbsp;(<span id="activeTimersCount">0</span>)</button>
+      <button class="btn-header" onclick="undoLast()" title="Undo Last Action">↩&nbsp;Undo</button>
+      <button class="btn-header adult-only" onclick="openSubsModal()" title="Substitutions & Cards">🔄&nbsp;Subs&nbsp;(<span id="activeTimersCount">0</span>)</button>
     </div>
     <div class="header-right">
-      <button class="btn-show-card yellow" onclick="showFullscreenCard('yellow')" title="Show Fullscreen Yellow Card" aria-label="Show Fullscreen Yellow Card"></button>
-      <button class="btn-show-card red" onclick="showFullscreenCard('red')" title="Show Fullscreen Red Card" aria-label="Show Fullscreen Red Card"></button>
-      <button class="btn-header" style="background:#238636; color:#fff;" onclick="openShareModal()" title="Share Match Report">📤<span class="hdr-txt-xs">&nbsp;Share</span></button>
+      <button class="btn-header" style="background:#238636; color:#fff; border-color:#2ea043;" onclick="openShareModal()" title="Share Match Report">📤&nbsp;Share</button>
       <button class="btn-menu" onclick="openDrawer()" title="Menu" aria-label="Menu">☰</button>
     </div>
   </header>
@@ -719,17 +739,21 @@
         <button class="btn-end-half" id="endHalfBtn" onclick="promptEndHalf()">🏁 End 1st Half</button>
       </div>
 
-      <!-- Quick Cards Section (Tap Yellow = Sin Bin | Press & Hold Yellow = Bunker Review 🟨➔🟥) -->
+      <!-- Prominent Cards Section (Tap = Fullscreen Card -> Log Dialog | Hold Yellow = Bunker Review) -->
       <div class="cards-quick-box">
         <div class="cards-header">
-          <span>🟨 CARDS (Hold 🟨=Review)</span>
+          <span>🟨 CARDS</span>
           <span id="defaultYellowDurationLabel" onclick="openYellowDurModal()" style="cursor:pointer; text-decoration:underline;">Dur: 10m ✎</span>
         </div>
         <div class="cards-quick-buttons">
-          <button class="btn-card-add" id="btnYellowHome">+ 🟨 Home</button>
-          <button class="btn-card-add" id="btnYellowAway">+ 🟨 Away</button>
-          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="openCardIssueModal('home', 'red_20')">+ 🟥 Home</button>
-          <button class="btn-card-add" style="border-color:rgba(218,54,51,0.5); color:#f85149;" onclick="openCardIssueModal('away', 'red_20')">+ 🟥 Away</button>
+          <button type="button" class="btn-card-prominent yellow" id="btnFullscreenYellow" title="Tap: Yellow Card | Hold: Bunker Review">
+            <span class="card-btn-main"><span class="card-swatch yellow"></span>YELLOW<span class="card-word-wide">&nbsp;CARD</span></span>
+            <span class="card-btn-sub">(Hold = Review)</span>
+          </button>
+          <button type="button" class="btn-card-prominent red" id="btnFullscreenRed" onclick="showFullscreenCard('red')" title="Show Fullscreen Red Card & Log">
+            <span class="card-btn-main"><span class="card-swatch red"></span>RED<span class="card-word-wide">&nbsp;CARD</span></span>
+            <span class="card-btn-sub">(20m / Full)</span>
+          </button>
         </div>
       </div>
 
@@ -770,14 +794,6 @@
     <div class="drawer-header">
       <h3 style="font-size:1.1rem; color:#58a6ff;">🏉 Match Menu</h3>
       <button class="btn-pill-small" style="font-size:0.9rem;" onclick="closeDrawer()">✕</button>
-    </div>
-
-    <div>
-      <div class="drawer-section-title">Show Card Fullscreen</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:5px;">
-        <button class="drawer-btn" style="background:#facc15; color:#111827; justify-content:center; font-weight:800;" onclick="closeDrawer(); showFullscreenCard('yellow');">🟨 Yellow Card</button>
-        <button class="drawer-btn" style="background:#dc2626; color:#fff; justify-content:center; font-weight:800;" onclick="closeDrawer(); showFullscreenCard('red');">🟥 Red Card</button>
-      </div>
     </div>
 
     <div>
@@ -1146,11 +1162,10 @@
           <summary>5. Karten &amp; Zeitstrafen (Law 9)</summary>
           <div class="help-body">
             <ul>
-              <li><strong>Vollbild-Karten:</strong> Oben rechts auf <strong>🟨</strong> oder <strong>🟥</strong> tippen, um den gesamten Bildschirm als Karte anzuzeigen. Ein Tipp auf die Karte schließt die Vollbildanzeige und öffnet direkt den Karten-Dialog zum Erfassen von Team &amp; Rückennummer (bei reinem Vorzeigen einfach auf <strong>Cancel</strong> tippen).</li>
-              <li><strong>Standard-Strafzeit:</strong> Im Kartenfeld auf <strong>Dur: 10m ✎</strong> tippen (Vorlagen: <strong>2m (7s)</strong>, <strong>5m (Youth)</strong>, <strong>10m (Adult)</strong>).</li>
-              <li><strong>Gelbe Karte (Sin Bin):</strong> Kurz auf <strong>+ 🟨 Home</strong> / <strong>Away</strong> tippen, Rückennummer (1–999) eingeben und mit <strong>Confirm Card</strong> bestätigen.</li>
-              <li><strong>Bunker Review (🟨➔🟥):</strong> Taste <strong>+ 🟨</strong> ca. 1 Sekunde gedrückt halten. Um eine laufende Gelbe Karte nachträglich auf Rot hochzustufen, die gelbe Timer-Leiste neben dem Punktestand gedrückt halten.</li>
-              <li><strong>Rote Karte:</strong> Über <strong>+ 🟥</strong> zwischen <strong>🟥 20-Min Red Card</strong> (Ersatz nach 20 Min. Spielzeit) und <strong>🟥 Full Red (Perm.)</strong> (dauerhafte Unterzahl) wählen.</li>
+              <li><strong>Gelbe &amp; Rote Karte (Vollbild ➔ Erfassen):</strong> Im Kartenfeld auf <strong>YELLOW CARD</strong> oder <strong>RED CARD</strong> tippen, um den gesamten Bildschirm als Karte vorzuzeigen. Ein Tipp auf die Vollbild-Karte schließt sie und öffnet direkt den Karten-Dialog für Team (<strong>Home</strong> / <strong>Away</strong>) und Rückennummer (1–999). Bei reinem Vorzeigen einfach auf <strong>Cancel</strong> tippen.</li>
+              <li><strong>Standard-Strafzeit:</strong> Über dem Kartenfeld auf <strong>Dur: 10m ✎</strong> tippen (Vorlagen: <strong>2m (7s)</strong>, <strong>5m (Youth)</strong>, <strong>10m (Adult)</strong>).</li>
+              <li><strong>Bunker Review (🟨➔🟥):</strong> Taste <strong>YELLOW CARD</strong> ca. 1 Sekunde gedrückt halten – die Vollbild-Karte öffnet mit Review-Hinweis und wählt im Dialog direkt <strong>Yellow (Review)</strong> vor. Um eine laufende Gelbe Karte nachträglich auf Rot hochzustufen, die gelbe Timer-Leiste neben dem Punktestand gedrückt halten.</li>
+              <li><strong>Rote Karte:</strong> Im Dialog nach <strong>RED CARD</strong> zwischen <strong>🟥 20-Min Red Card</strong> (Ersatz nach 20 Min. Spielzeit) und <strong>🟥 Full Red (Perm.)</strong> (dauerhafte Unterzahl) wählen.</li>
               <li><strong>2x Gelb = Rot:</strong> Erhält dieselbe Rückennummer eine zweite Gelbe Karte, vergibt die App automatisch Rot.</li>
             </ul>
           </div>
@@ -1368,27 +1383,40 @@
       { name: "Teal", hex: "#39c5cf" }
     ];
 
-    /* === Fullscreen Card Display (Yellow / Red) === */
-    function showFullscreenCard(color) {
-      activeFullscreenCardColor = color;
+    /* === Fullscreen Card Display (Yellow / Yellow Review / Red) === */
+    function showFullscreenCard(mode) {
+      activeFullscreenCardColor = mode;
       const overlay = document.getElementById('fullscreenCardOverlay');
       const title = document.getElementById('fullscreenCardTitle');
+      const isYellow = (mode === 'yellow' || mode === 'yellow_review');
       overlay.classList.remove('yellow', 'red');
-      overlay.classList.add(color);
-      title.textContent = color === 'yellow' ? '🟨 YELLOW CARD' : '🟥 RED CARD';
+      overlay.classList.add(isYellow ? 'yellow' : 'red');
+      if (mode === 'yellow_review') {
+        title.textContent = '🟨➔🟥 YELLOW CARD • REVIEW';
+      } else if (mode === 'yellow') {
+        title.textContent = '🟨 YELLOW CARD';
+      } else {
+        title.textContent = '🟥 RED CARD';
+      }
       overlay.style.display = 'flex';
       if (navigator.vibrate) {
-        try { navigator.vibrate(color === 'yellow' ? [200] : [350, 100, 350]); } catch (e) {}
+        try {
+          if (mode === 'yellow') navigator.vibrate([200]);
+          else if (mode === 'yellow_review') navigator.vibrate([120, 60, 220]);
+          else navigator.vibrate([350, 100, 350]);
+        } catch (e) {}
       }
     }
 
     function closeFullscreenCard() {
       document.getElementById('fullscreenCardOverlay').style.display = 'none';
-      const shownColor = activeFullscreenCardColor;
+      const shownMode = activeFullscreenCardColor;
       activeFullscreenCardColor = null;
-      if (shownColor === 'yellow') {
+      if (shownMode === 'yellow') {
         openCardIssueModal(null, 'yellow');
-      } else if (shownColor === 'red') {
+      } else if (shownMode === 'yellow_review') {
+        openCardIssueModal(null, 'yellow_review');
+      } else if (shownMode === 'red') {
         openCardIssueModal(null, 'red_20');
       }
     }
@@ -3606,16 +3634,11 @@
     window.addEventListener('pagehide', saveStateToStorage);
     window.addEventListener('beforeunload', saveStateToStorage);
 
-    /* Bind Press & Hold on Quick Yellow Card Buttons (Tap = Sin Bin, Hold = Bunker Review) */
+    /* Bind Press & Hold on Prominent Yellow Card Button (Tap = Fullscreen Yellow, Hold = Fullscreen Yellow Review) */
     bindPressHold(
-      document.getElementById('btnYellowHome'),
-      () => openCardIssueModal('home', 'yellow'),
-      () => openCardIssueModal('home', 'yellow_review')
-    );
-    bindPressHold(
-      document.getElementById('btnYellowAway'),
-      () => openCardIssueModal('away', 'yellow'),
-      () => openCardIssueModal('away', 'yellow_review')
+      document.getElementById('btnFullscreenYellow'),
+      () => showFullscreenCard('yellow'),
+      () => showFullscreenCard('yellow_review')
     );
 
     syncViewportHeight();
