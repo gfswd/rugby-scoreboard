@@ -469,7 +469,16 @@
     }
     .num-input-large:focus { border-color: #58a6ff; outline: none; }
 
-    /* Card Modal Option Pills */
+    /* Card Modal Team & Option Pills */
+    .card-team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 2px; border-radius: 9px; border: 2px solid transparent; transition: border-color 0.15s; }
+    .card-team-grid.needs-team { border-color: #e3b341; background: rgba(227, 179, 65, 0.08); }
+    .btn-card-team {
+      background: #21262d; border: 2px solid var(--border); color: var(--text);
+      padding: 10px 8px; border-radius: 7px; font-size: 0.88rem; font-weight: 800;
+      text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: transform 0.1s, border-color 0.15s;
+    }
+    .btn-card-team:active { transform: scale(0.98); }
     .card-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .btn-card-type {
       background: #21262d; border: 1px solid var(--border); color: var(--text);
@@ -647,7 +656,7 @@
   <!-- Fullscreen Yellow / Red Card Overlay for Pitch Display -->
   <div class="fullscreen-card-overlay" id="fullscreenCardOverlay" onclick="closeFullscreenCard()">
     <div class="fullscreen-card-hint" id="fullscreenCardTitle">YELLOW CARD</div>
-    <div class="fullscreen-card-hint">Tap anywhere to close</div>
+    <div class="fullscreen-card-hint">Tap anywhere to log card</div>
   </div>
 
   <!-- Non-blocking Toast Container -->
@@ -806,6 +815,14 @@
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
         <h3 id="cardIssueTitle" style="color:#fce881; font-size:1.0rem;">🟨 Issue Card</h3>
         <button class="btn-pill-small" style="font-size:0.85rem; padding:2px 7px;" onclick="closeModal('cardIssueModal')">✕</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <span style="font-size:0.74rem; color:var(--text-muted); font-weight:700; text-align:center;">Team:</span>
+        <div class="card-team-grid" id="cardTeamGrid">
+          <button type="button" class="btn-card-team" id="cardTeamHomeBtn" onclick="selectCardModalTeam('home', true)">Home</button>
+          <button type="button" class="btn-card-team" id="cardTeamAwayBtn" onclick="selectCardModalTeam('away', true)">Away</button>
+        </div>
       </div>
 
       <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
@@ -1129,7 +1146,7 @@
           <summary>5. Karten &amp; Zeitstrafen (Law 9)</summary>
           <div class="help-body">
             <ul>
-              <li><strong>Vollbild-Karten:</strong> Oben rechts auf <strong>🟨</strong> oder <strong>🟥</strong> tippen, um den gesamten Bildschirm als Karte anzuzeigen (<strong>Tap anywhere to close</strong> schließt wieder).</li>
+              <li><strong>Vollbild-Karten:</strong> Oben rechts auf <strong>🟨</strong> oder <strong>🟥</strong> tippen, um den gesamten Bildschirm als Karte anzuzeigen. Ein Tipp auf die Karte schließt die Vollbildanzeige und öffnet direkt den Karten-Dialog zum Erfassen von Team &amp; Rückennummer (bei reinem Vorzeigen einfach auf <strong>Cancel</strong> tippen).</li>
               <li><strong>Standard-Strafzeit:</strong> Im Kartenfeld auf <strong>Dur: 10m ✎</strong> tippen (Vorlagen: <strong>2m (7s)</strong>, <strong>5m (Youth)</strong>, <strong>10m (Adult)</strong>).</li>
               <li><strong>Gelbe Karte (Sin Bin):</strong> Kurz auf <strong>+ 🟨 Home</strong> / <strong>Away</strong> tippen, Rückennummer (1–999) eingeben und mit <strong>Confirm Card</strong> bestätigen.</li>
               <li><strong>Bunker Review (🟨➔🟥):</strong> Taste <strong>+ 🟨</strong> ca. 1 Sekunde gedrückt halten. Um eine laufende Gelbe Karte nachträglich auf Rot hochzustufen, die gelbe Timer-Leiste neben dem Punktestand gedrückt halten.</li>
@@ -1328,6 +1345,7 @@
 
     let cardModalTeam = 'home';
     let cardModalType = 'yellow';
+    let activeFullscreenCardColor = null;
     let lastBadgesSignature = '';
     let storageQuotaWarned = false;
 
@@ -1352,6 +1370,7 @@
 
     /* === Fullscreen Card Display (Yellow / Red) === */
     function showFullscreenCard(color) {
+      activeFullscreenCardColor = color;
       const overlay = document.getElementById('fullscreenCardOverlay');
       const title = document.getElementById('fullscreenCardTitle');
       overlay.classList.remove('yellow', 'red');
@@ -1365,6 +1384,13 @@
 
     function closeFullscreenCard() {
       document.getElementById('fullscreenCardOverlay').style.display = 'none';
+      const shownColor = activeFullscreenCardColor;
+      activeFullscreenCardColor = null;
+      if (shownColor === 'yellow') {
+        openCardIssueModal(null, 'yellow');
+      } else if (shownColor === 'red') {
+        openCardIssueModal(null, 'red_20');
+      }
     }
 
     /* === HTML Escaping & Contrast Helpers === */
@@ -2140,17 +2166,61 @@
       closeModal('yellowDurModal');
     }
 
+    function selectCardModalTeam(teamKey, fromUserTap = false) {
+      cardModalTeam = (teamKey === 'home' || teamKey === 'away') ? teamKey : null;
+      const grid = document.getElementById('cardTeamGrid');
+      const hBtn = document.getElementById('cardTeamHomeBtn');
+      const aBtn = document.getElementById('cardTeamAwayBtn');
+
+      hBtn.textContent = state.homeName;
+      aBtn.textContent = state.awayName;
+
+      if (cardModalTeam === 'home') {
+        hBtn.style.background = state.homeColor;
+        hBtn.style.color = getContrastColor(state.homeColor);
+        hBtn.style.borderColor = '#f0f6fc';
+        aBtn.style.background = '#21262d';
+        aBtn.style.color = 'var(--text-muted)';
+        aBtn.style.borderColor = 'var(--border)';
+        grid.classList.remove('needs-team');
+        document.getElementById('cardIssueTitle').textContent = `Cards & Sanctions — ${state.homeName}`;
+      } else if (cardModalTeam === 'away') {
+        aBtn.style.background = state.awayColor;
+        aBtn.style.color = getContrastColor(state.awayColor);
+        aBtn.style.borderColor = '#f0f6fc';
+        hBtn.style.background = '#21262d';
+        hBtn.style.color = 'var(--text-muted)';
+        hBtn.style.borderColor = 'var(--border)';
+        grid.classList.remove('needs-team');
+        document.getElementById('cardIssueTitle').textContent = `Cards & Sanctions — ${state.awayName}`;
+      } else {
+        hBtn.style.background = '#21262d';
+        hBtn.style.color = getReadableOnDark(state.homeColor);
+        hBtn.style.borderColor = getHexLuminance(state.homeColor) < 40 ? '#484f58' : state.homeColor;
+        aBtn.style.background = '#21262d';
+        aBtn.style.color = getReadableOnDark(state.awayColor);
+        aBtn.style.borderColor = getHexLuminance(state.awayColor) < 40 ? '#484f58' : state.awayColor;
+        grid.classList.add('needs-team');
+        document.getElementById('cardIssueTitle').textContent = 'Cards & Sanctions — Select Team';
+      }
+
+      if (fromUserTap) {
+        const jInput = document.getElementById('cardJerseyInput');
+        if (jInput && !jInput.value) {
+          setTimeout(() => jInput.focus(), 40);
+        }
+      }
+    }
+
     function openCardIssueModal(teamKey, defaultType = 'yellow', prefillJersey = '') {
-      cardModalTeam = teamKey;
-      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
-      document.getElementById('cardIssueTitle').textContent = `Cards & Sanctions — ${teamLabel}`;
+      selectCardModalTeam(teamKey, false);
       const jInput = document.getElementById('cardJerseyInput');
       jInput.value = prefillJersey;
       document.getElementById('cardDurationInput').value = state.defaultYellowMinutes;
 
       selectCardModalType(defaultType);
       document.getElementById('cardIssueModal').style.display = 'flex';
-      if (!prefillJersey) {
+      if (cardModalTeam && !prefillJersey) {
         setTimeout(() => jInput.focus(), 60);
       }
     }
@@ -2181,6 +2251,13 @@
     }
 
     function confirmCardIssue() {
+      if (cardModalTeam !== 'home' && cardModalTeam !== 'away') {
+        const grid = document.getElementById('cardTeamGrid');
+        if (grid) grid.classList.add('needs-team');
+        showToast(`Please select ${state.homeName} or ${state.awayName} first.`, "#e3b341", 3500);
+        return;
+      }
+
       const num = parseJerseyNumber(document.getElementById('cardJerseyInput').value);
       if (!num) {
         showToast("Please enter a valid jersey number (1–999).", "#f85149", 3500);
@@ -3479,6 +3556,9 @@
       } catch (err) {}
     }
 
+    document.getElementById('cardJerseyInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmCardIssue();
+    });
     document.getElementById('teamNameInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') confirmTeamName();
     });
