@@ -242,6 +242,30 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
     }
     .btn-score span { font-size: 0.56rem; font-weight: 500; opacity: 0.92; }
+    .btn-score:disabled { opacity: 0.34; cursor: not-allowed; filter: grayscale(0.4); }
+    .btn-score.conv-pending { box-shadow: inset 0 0 0 1.5px #fce881; }
+    .conv-outcome-row {
+      display: none; grid-template-columns: 1fr 1fr; gap: 3px; width: 100%;
+    }
+    .conv-outcome-row.visible { display: grid; }
+    .pen-outcome-row {
+      display: none; grid-template-columns: 1.25fr 1.25fr 0.55fr; gap: 3px; width: 100%;
+    }
+    body.view-adult .pen-outcome-row.visible { display: grid; }
+    .missed-kicks-row {
+      display: none; grid-template-columns: 1fr; gap: 3px; width: 100%;
+    }
+    body.view-adult.track-missed-kicks .missed-kicks-row { display: grid; }
+    .btn-mini-outcome {
+      background: #1c2128; border: 1px dashed #484f58; color: #c9d1d9;
+      padding: clamp(2px, 0.55vh, 4px) 3px; border-radius: 4px;
+      font-size: 0.66rem; font-weight: 700; line-height: 1.1; white-space: nowrap;
+    }
+    .btn-mini-outcome:active { background: #30363d; color: #fff; border-color: #8b949e; }
+    .conv-outcome-row .btn-mini-outcome { border-color: rgba(227, 179, 65, 0.55); color: #fce881; background: #211d12; }
+    .btn-mini-outcome.pen-made { border-style: solid; border-color: #2ea043; color: #7ee787; background: rgba(35, 134, 54, 0.24); }
+    .btn-mini-outcome.pen-miss { border-color: rgba(227, 179, 65, 0.55); color: #fce881; background: #211d12; }
+    .btn-mini-outcome.pen-cancel { color: var(--text-muted); padding-left: 0; padding-right: 0; }
     .home .btn-try { background: var(--home-team-bg, #1f6feb); color: var(--home-team-text, #fff); }
     .home .btn-sec { background: var(--home-team-sec, #1158c7); color: var(--home-team-text, #fff); }
     .home .btn-pt  { background: var(--home-team-pt, #0b3a82); color: var(--home-team-pt-text, #fff); border: 1px dashed rgba(255,255,255,0.25); opacity: 0.9; }
@@ -282,6 +306,9 @@
       padding: clamp(4px, 1.0vh, 7px) 2px;
       font-size: clamp(0.76rem, 1.6vh, 0.9rem);
     }
+    body.view-adult .conv-outcome-row,
+    body.view-adult .pen-outcome-row,
+    body.view-adult .missed-kicks-row,
     body.view-adult .btn-corr-menu {
       grid-column: span 3;
     }
@@ -305,6 +332,7 @@
       font-weight: 700;
       border-radius: 6px;
     }
+    body.view-youth .conv-outcome-row,
     body.view-youth .btn-corr-menu {
       grid-column: span 2;
     }
@@ -400,6 +428,20 @@
     .timer-pill.red20 { border-color: var(--card-red); background: rgba(218, 54, 51, 0.18); }
     .timer-pill.blood { border-color: var(--blood-color); background: rgba(248, 81, 73, 0.12); }
     .timer-pill.hia { border-color: var(--hia-color); background: rgba(240, 136, 62, 0.12); }
+    .timer-pill.sinbin-ready {
+      border: 2px solid #2ea043;
+      background: rgba(46, 160, 67, 0.24);
+      color: #f0f6fc;
+      animation: pulseReady 1.25s ease-in-out infinite;
+    }
+    @keyframes pulseReady {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.55); }
+      50% { box-shadow: 0 0 0 4px rgba(46, 160, 67, 0.08); }
+    }
+    .btn-pill-ready {
+      background: #238636 !important; border-color: #2ea043 !important; color: #ffffff !important;
+      padding: 3px 8px !important; font-weight: 800 !important;
+    }
     .timer-pill-adjust { display: flex; align-items: center; gap: 3px; }
     .btn-pill-small {
       background: #21262d; border: 1px solid var(--border); color: var(--text);
@@ -444,6 +486,9 @@
       z-index: 100; justify-content: center; align-items: center; padding: 12px;
     }
     .modal.modal-top { z-index: 150; }
+    #scorerModal { z-index: 165; }
+    #shareModal { z-index: 175; }
+    #confirmActionModal { z-index: 190; }
     .text-input-modal {
       width: 100%; font-size: 1rem; font-weight: 600;
       background: #0d1117; color: #fff; border: 2px solid #30363d;
@@ -623,13 +668,76 @@
     .status-tag.review { color: #fca5a5; background: rgba(220, 38, 38, 0.25); }
     .status-tag.redcard { color: #f85149; background: rgba(218, 54, 51, 0.2); }
     .status-tag.temp { color: #f0883e; background: rgba(240, 136, 62, 0.18); }
+    .status-tag.ready { color: #56d364; background: rgba(46, 160, 67, 0.26); border: 1px solid #2ea043; }
 
     .history-list {
-      display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto;
       background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 8px;
     }
-    .history-item { display: flex; justify-content: space-between; font-size: 0.82rem; border-bottom: 1px solid #21262d; padding: 4px 0; gap: 8px; }
+    .history-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; border-bottom: 1px solid #21262d; padding: 5px 4px; gap: 8px; }
     .history-item:last-child { border-bottom: none; }
+    .history-item.editable-score { cursor: pointer; border-radius: 5px; }
+    .history-item.editable-score:active { background: #1f2937; }
+    .scorer-tag {
+      display: inline-block; font-size: 0.68rem; font-weight: 700; color: #79c0ff;
+      background: rgba(56, 139, 253, 0.14); border: 1px solid rgba(56, 139, 253, 0.35);
+      border-radius: 4px; padding: 0 5px; margin-left: 4px; vertical-align: middle;
+    }
+    .scorer-tag.empty { color: var(--text-muted); background: #161b22; border-color: #30363d; }
+
+    /* Archive & Reset Checkbox Styles */
+    .archive-check-row {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; font-size: 0.82rem; font-weight: 700; color: var(--text);
+      cursor: pointer; margin-bottom: 4px;
+    }
+    .archive-check-row input { width: 18px; height: 18px; accent-color: #2ea043; cursor: pointer; }
+    .archive-list-wrap {
+      display: flex; flex-direction: column; gap: 10px; max-height: 54vh; overflow-y: auto;
+      padding-right: 2px;
+    }
+    .archive-date-group {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .archive-date-header {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+      gap: 6px; border-bottom: 1px solid #21262d; padding-bottom: 6px;
+    }
+    .archive-date-title { font-size: 0.78rem; font-weight: 800; color: #58a6ff; }
+    .archive-day-actions { display: flex; gap: 5px; }
+    .archive-card {
+      background: #161b22; border: 1px solid var(--border); border-radius: 7px;
+      padding: 8px; display: flex; justify-content: space-between; align-items: center;
+      gap: 8px; cursor: pointer;
+    }
+    .archive-card:active { border-color: #58a6ff; background: #1c2430; }
+    .archive-card-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+    .archive-match-row {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      font-size: 0.84rem; font-weight: 800;
+    }
+    .archive-dot {
+      width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #f0f6fc;
+      display: inline-block; flex-shrink: 0;
+    }
+    .archive-score-pill {
+      background: #0d1117; border: 1px solid #30363d; border-radius: 5px;
+      padding: 1px 7px; font-family: monospace; font-size: 0.88rem; color: #f0f6fc;
+    }
+    .archive-meta-row {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+    .archive-badge {
+      padding: 1px 5px; border-radius: 4px; font-weight: 700; font-size: 0.66rem;
+      background: #21262d; border: 1px solid var(--border); color: var(--text);
+    }
+    .archive-detail-box {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; display: flex; flex-direction: column; gap: 8px;
+    }
 
     /* === HELP MODAL ACCORDION === */
     .help-details {
@@ -709,12 +817,24 @@
       <div class="rugby-buttons">
         <div class="try-row">
           <button class="btn-score btn-try" onclick="score('home', 5, 'Try', 't')">+5 <span>Try</span></button>
-          <button class="btn-score btn-sec btn-conv-main" onclick="score('home', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
+          <button class="btn-score btn-sec btn-conv-main" id="homeConvBtn" onclick="score('home', 2, 'Conversion', 'c')" disabled>+2 <span id="homeConvSub">Conv</span></button>
+        </div>
+        <div class="conv-outcome-row" id="homeConvActions">
+          <button type="button" class="btn-mini-outcome" onclick="recordKickOutcome('home', 'mc', 'Missed Conversion')">✗ Miss Conv</button>
+          <button type="button" class="btn-mini-outcome" onclick="recordKickOutcome('home', 'dc', 'Conversion Declined')">⊘ Declined</button>
         </div>
         <div class="kicks-row">
-          <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
+          <button class="btn-score btn-sec adult-only" id="homePenBtn" onclick="openPenaltyOutcome('home')">+3 <span>Pen</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('home', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
           <button class="btn-score btn-pt adult-only" onclick="score('home', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
+        </div>
+        <div class="pen-outcome-row adult-only" id="homePenActions">
+          <button type="button" class="btn-mini-outcome pen-made" onclick="resolvePenaltyOutcome('home', 'made')">✓ +3 Made</button>
+          <button type="button" class="btn-mini-outcome pen-miss" onclick="resolvePenaltyOutcome('home', 'miss')">✗ Miss Pen</button>
+          <button type="button" class="btn-mini-outcome pen-cancel" onclick="cancelPenaltyOutcome('home')" title="Cancel">✕</button>
+        </div>
+        <div class="missed-kicks-row adult-only" id="homeMissedKicksRow">
+          <button type="button" class="btn-mini-outcome" onclick="recordKickOutcome('home', 'md', 'Missed Drop Goal')">✗ Missed Drop Goal</button>
         </div>
         <button class="btn-corr-menu" onclick="openCorrectionModal('home')">± Score Correction</button>
       </div>
@@ -770,12 +890,24 @@
       <div class="rugby-buttons">
         <div class="try-row">
           <button class="btn-score btn-try" onclick="score('away', 5, 'Try', 't')">+5 <span>Try</span></button>
-          <button class="btn-score btn-sec btn-conv-main" onclick="score('away', 2, 'Conversion', 'c')">+2 <span>Conv</span></button>
+          <button class="btn-score btn-sec btn-conv-main" id="awayConvBtn" onclick="score('away', 2, 'Conversion', 'c')" disabled>+2 <span id="awayConvSub">Conv</span></button>
+        </div>
+        <div class="conv-outcome-row" id="awayConvActions">
+          <button type="button" class="btn-mini-outcome" onclick="recordKickOutcome('away', 'mc', 'Missed Conversion')">✗ Miss Conv</button>
+          <button type="button" class="btn-mini-outcome" onclick="recordKickOutcome('away', 'dc', 'Conversion Declined')">⊘ Declined</button>
         </div>
         <div class="kicks-row">
-          <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Penalty', 'p')">+3 <span>Pen</span></button>
+          <button class="btn-score btn-sec adult-only" id="awayPenBtn" onclick="openPenaltyOutcome('away')">+3 <span>Pen</span></button>
           <button class="btn-score btn-sec adult-only" onclick="score('away', 3, 'Drop Goal', 'd')">+3 <span>Drop</span></button>
           <button class="btn-score btn-pt adult-only" onclick="score('away', 7, 'Penalty Try', 'pt')" title="Penalty Try (Law 8.3 - 7 pts, no conversion)">+7 <span>PT</span></button>
+        </div>
+        <div class="pen-outcome-row adult-only" id="awayPenActions">
+          <button type="button" class="btn-mini-outcome pen-made" onclick="resolvePenaltyOutcome('away', 'made')">✓ +3 Made</button>
+          <button type="button" class="btn-mini-outcome pen-miss" onclick="resolvePenaltyOutcome('away', 'miss')">✗ Miss Pen</button>
+          <button type="button" class="btn-mini-outcome pen-cancel" onclick="cancelPenaltyOutcome('away')" title="Cancel">✕</button>
+        </div>
+        <div class="missed-kicks-row adult-only" id="awayMissedKicksRow">
+          <button type="button" class="btn-mini-outcome" onclick="recordKickOutcome('away', 'md', 'Missed Drop Goal')">✗ Missed Drop Goal</button>
         </div>
         <button class="btn-corr-menu" onclick="openCorrectionModal('away')">± Score Correction</button>
       </div>
@@ -800,6 +932,7 @@
     <div>
       <div class="drawer-section-title">Timeline & Logs</div>
       <button class="drawer-btn" onclick="closeDrawer(); openHistoryModal();">📜 Match Timeline (<span id="histCount">0</span>) <span>➔</span></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openArchiveModal();">🗂️ Match History (<span id="archiveCount">0</span>) <span>➔</span></button>
       <button class="drawer-btn" onclick="closeDrawer(); openNotesModal();">📝 Edit Match Notes <span>➔</span></button>
       <button class="drawer-btn adult-only" onclick="closeDrawer(); openSubsModal();">🔄 Subs & Cards (Law 3) <span>➔</span></button>
     </div>
@@ -808,6 +941,8 @@
       <div class="drawer-section-title">Settings & View</div>
       <button class="drawer-btn" onclick="toggleViewMode();">🏉 Mode: <strong id="menuViewLabel">Full</strong></button>
       <button class="drawer-btn" onclick="cycleLayoutMode();">📱 Orientation: <strong id="menuLayoutLabel">Auto</strong></button>
+      <button class="drawer-btn adult-only" onclick="toggleTrackMissedKicks();">🎯 Missed Drop: <strong id="menuMissedKicksLabel">Off</strong></button>
+      <button class="drawer-btn" onclick="toggleAskScorer();">🏃 Ask Scorer #: <strong id="menuAskScorerLabel">Off</strong></button>
       <button class="drawer-btn" onclick="closeDrawer(); openTimeModal();">⏱ Set Half Duration <span>➔</span></button>
       <button class="drawer-btn" id="drawerInstallBtn" onclick="triggerPwaInstall();">📲 Install as App <span>➔</span></button>
       <button class="drawer-btn" onclick="closeDrawer(); openHelpModal();">❓ Anleitung &amp; Über diese App <span>➔</span></button>
@@ -964,9 +1099,13 @@
     <div class="modal-content" style="max-width: 360px; text-align: center;">
       <div style="font-size: 2.4rem;">⚠️</div>
       <h3 style="color:#f85149; margin-bottom: 6px;">Start New Match?</h3>
-      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
         Are you sure? Scores, team names, colors, timers, and incident notes will be reset to default.
       </p>
+      <label class="archive-check-row" id="resetArchiveWrap">
+        <input type="checkbox" id="resetArchiveCheckbox" checked>
+        <span>🗂️ Aktuelles Spiel im Verlauf sichern</span>
+      </label>
       <div style="display: flex; gap: 8px;">
         <button class="btn-header" style="flex: 1; padding: 10px;" onclick="closeModal('resetModal')">Cancel</button>
         <button class="btn-header" style="flex: 1; padding: 10px; background: #da3633; color: #fff; font-weight: bold;" onclick="confirmResetAll()">Yes, Reset</button>
@@ -1000,7 +1139,13 @@
   <!-- Modal: History -->
   <div class="modal" id="histModal">
     <div class="modal-content">
-      <h3 style="color:#58a6ff;">📜 Match Timeline</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:#58a6ff;">📜 Match Timeline</h3>
+        <button class="btn-pill-small" onclick="closeModal('histModal')">✕</button>
+      </div>
+      <p style="font-size:0.72rem; color:var(--text-muted); margin-top:-4px;">
+        💡 Tip: Tap any score entry to add or edit Scorer # (1–999).
+      </p>
       <div class="history-list" id="histList"></div>
       <button class="btn-header" onclick="closeModal('histModal')">Close</button>
     </div>
@@ -1142,12 +1287,14 @@
         </details>
 
         <details class="help-details">
-          <summary>4. Punkte erfassen &amp; korrigieren</summary>
+          <summary>4. Punkte, Erhöhungen, Fehlschüsse &amp; Scorer</summary>
           <div class="help-body">
             <ul>
-              <li><strong>Punkte vergeben:</strong> Über <strong>+5 Try</strong>, <strong>+2 Conv</strong>, <strong>+3 Pen</strong>, <strong>+3 Drop</strong> oder <strong>+7 PT</strong> (Strafversuch – ohne Erhöhung, inkl. Erinnerung zur Karte).</li>
-              <li><strong>Schnelles Rückgängigmachen:</strong> Oben links <strong>↩ Undo</strong> macht die letzte Aktion (Punkte, Karte oder Auswechslung) sofort rückgängig.</li>
-              <li><strong>Gezielter Abzug:</strong> Unten im Team-Feld auf <strong>± Score Correction</strong> tippen, um einzelne Wertungen (<strong>-5 Try</strong>, <strong>-7 Penalty Try (PT)</strong>, <strong>-2 Conversion</strong>, <strong>-3 Penalty Goal</strong>, <strong>-3 Dropped Goal</strong>) abzuziehen.</li>
+              <li><strong>Try &amp; Erhöhung gekoppelt:</strong> Nach <strong>+5 Try</strong> wird <strong>+2 Conv</strong> für dieses Team freigeschaltet und direkt darunter erscheinen <strong>✗ Miss Conv</strong> und <strong>⊘ Declined</strong> (nicht blockierend). <strong>+7 PT</strong> (Strafversuch) benötigt nach Law 8.3 keine Erhöhung.</li>
+              <li><strong>Penalty-Auswahlleiste:</strong> Ein Tipp auf <strong>+3 Pen</strong> öffnet direkt darunter die nicht-blockierende Auswahlleiste <strong>✓ +3 Made</strong>, <strong>✗ Miss Pen</strong> und <strong>✕</strong> (Abbrechen).</li>
+              <li><strong>Drop-Goal-Fehlschuss (Opt-in):</strong> Im Menü <strong>☰</strong> unter <strong>🎯 Missed Drop</strong> lässt sich zusätzlich ein 1-Tap-Button <strong>✗ Missed Drop Goal</strong> unter den Kick-Tasten zuschalten.</li>
+              <li><strong>Punkteschützen (Opt-in):</strong> Im Menü <strong>☰</strong> über <strong>🏃 Ask Scorer #</strong> optional eine kurze Rückennummern-Abfrage (mit <strong>Skip</strong>) nach Wertungen aktivieren – oder jederzeit nachträglich in der <strong>📜 Match Timeline</strong> einen Punkte-Eintrag antippen.</li>
+              <li><strong>Korrektur &amp; Undo:</strong> Oben links <strong>↩ Undo</strong> macht die letzte Aktion rückgängig; <strong>± Score Correction</strong> zieht gezielt einzelne Wertungen ab.</li>
             </ul>
           </div>
         </details>
@@ -1158,7 +1305,7 @@
             <ul>
               <li><strong>Gelbe &amp; Rote Karte (Vollbild ➔ Erfassen):</strong> Im Kartenfeld auf <strong>YELLOW CARD</strong> oder <strong>RED CARD</strong> tippen, um den gesamten Bildschirm als Karte vorzuzeigen. Ein Tipp auf die Vollbild-Karte schließt sie und öffnet direkt den Karten-Dialog für Team (<strong>Home</strong> / <strong>Away</strong>) und Rückennummer (1–999). Bei reinem Vorzeigen einfach auf <strong>Cancel</strong> tippen.</li>
               <li><strong>Standard-Strafzeit:</strong> Über dem Kartenfeld auf <strong>Dur: 10m ✎</strong> tippen (Vorlagen: <strong>2m (7s)</strong>, <strong>5m (Youth)</strong>, <strong>10m (Adult)</strong>).</li>
-              <li><strong>Sin Bin &amp; Bunker Review (🟨➔🟥):</strong> Nach der gelben Vollbild-Karte ist im Dialog standardmäßig <strong>🟨 Yellow (Sin Bin)</strong> mit der eingestellten Strafzeit (Standard: 10 Min.) vorausgewählt. Für ein Off-Field-Review im Dialog aktiv <strong>🟨➔🟥 Bunker Review</strong> antippen. Um eine laufende Gelbe Karte nachträglich auf Rot hochzustufen, die gelbe Timer-Leiste neben dem Punktestand gedrückt halten.</li>
+              <li><strong>Sin Bin &amp; Bunker Review (🟨➔🟥):</strong> Nach der gelben Vollbild-Karte ist im Dialog standardmäßig <strong>🟨 10m Sin Bin</strong> vorausgewählt; für ein Review aktiv <strong>🟨➔🟥 Bunker Review</strong> antippen. Läuft der Sin-Bin-Timer ab, bleibt die Anzeige grün pulsierend (<strong>✅ #... BACK ON?</strong>) samt Hinweis-Banner stehen, bis du die Rückkehr bei der nächsten Unterbrechung mit <strong>✓ On</strong> bestätigst.</li>
               <li><strong>Rote Karte:</strong> Im Dialog nach <strong>RED CARD</strong> zwischen <strong>🟥 20-Min Red Card</strong> (Ersatz nach 20 Min. Spielzeit) und <strong>🟥 Full Red (Perm.)</strong> (dauerhafte Unterzahl) wählen.</li>
               <li><strong>2x Gelb = Rot:</strong> Erhält dieselbe Rückennummer eine zweite Gelbe Karte, vergibt die App automatisch Rot.</li>
             </ul>
@@ -1178,13 +1325,13 @@
         </details>
 
         <details class="help-details">
-          <summary>7. Notizen, Spielbericht-Export, Speicherung &amp; Tipps</summary>
+          <summary>7. Turnierverlauf, Spielbericht-Export, Speicherung &amp; Tipps</summary>
           <div class="help-body">
             <ul>
-              <li><strong>Notizen &amp; Chronik:</strong> Über <strong>📝 Match Notes &amp; Incidents</strong> Notizen samt <strong>⏱ Insert Timestamp</strong> erfassen; über <strong>📜 Match Timeline</strong> im Menü den gesamten Spielverlauf einsehen.</li>
-              <li><strong>Bericht teilen:</strong> Oben rechts auf <strong>📤 Share</strong> tippen für <strong>📲 Share Image</strong>, <strong>💬 WhatsApp Text</strong>, <strong>💾 Save Image</strong> oder <strong>📋 Copy Text</strong>.</li>
-              <li><strong>Automatische Speicherung:</strong> Alle Daten werden sofort lokal im Gerät gespeichert. Nur das Löschen der Browserdaten oder <strong>⚠️ New Match (Reset All)</strong> im Menü setzt das Spiel zurück.</li>
-              <li><strong>Praxis-Tipps:</strong> Auf dem iPhone den seitlichen Stummschalter deaktivieren, damit die Sirene hörbar ist. Das Display bleibt aktiv geöffnet wach; beim Sperren wird die verstrichene Zeit beim Entsperren exakt nachberechnet. Über <strong>📱 Orientation: Auto</strong> im Menü lässt sich Hoch- oder Querformat feststellen.</li>
+              <li><strong>Turnierverlauf (Match History):</strong> Im Menü <strong>☰</strong> unter <strong>🗂️ Match History</strong> werden abgeschlossene Spiele (bis zu 50 Partien) lokal nach Datum gruppiert gespeichert – automatisch beim <strong>New Match</strong>-Reset (Haken vorausgewählt) oder manuell über <strong>💾 Aktuelles Spiel jetzt sichern</strong>.</li>
+              <li><strong>Einzel- &amp; Turniertag-Export:</strong> Jedes archivierte Spiel lässt sich nachträglich öffnen und als Bild/Text exportieren. Pro Datum gibt es zusätzlich <strong>💬 Tag per WhatsApp</strong> und <strong>📋 Tag kopieren</strong> (inkl. optionalem Turnier-/Platz-Titel) als Sammelbericht für die Turnierleitung.</li>
+              <li><strong>Notizen &amp; Chronik:</strong> Über <strong>📝 Match Notes &amp; Incidents</strong> Notizen samt <strong>⏱ Insert Timestamp</strong> erfassen; in der <strong>📜 Match Timeline</strong> können Punkte-Einträge angetippt werden, um Scorer-Nummern zu ergänzen.</li>
+              <li><strong>Praxis-Tipps:</strong> Auf dem iPhone den seitlichen Stummschalter deaktivieren, damit die Sirene hörbar ist. Das Display bleibt aktiv geöffnet wach; beim Sperren wird die verstrichene Zeit beim Entsperren exakt nachberechnet.</li>
             </ul>
           </div>
         </details>
@@ -1296,6 +1443,64 @@
     </div>
   </div>
 
+  <!-- Modal: Optional Scorer Jersey Number -->
+  <div class="modal modal-top" id="scorerModal">
+    <div class="modal-content" style="max-width: 360px; text-align: center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 id="scorerModalTitle" style="color:#79c0ff; font-size:0.98rem;">🏃 Scorer Jersey #</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem;" onclick="closeModal('scorerModal')">✕</button>
+      </div>
+      <p id="scorerModalDesc" style="font-size:0.78rem; color:var(--text-muted);"></p>
+      <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+        <input type="number" id="scorerNumInput" class="num-input-large" inputmode="numeric" pattern="[0-9]*" min="1" max="999" placeholder="#">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn-header" id="scorerClearBtn" style="padding:10px; display:none; color:#f85149; border-color:rgba(248,81,73,0.4);" onclick="clearScorerModal()">Clear #</button>
+        <button class="btn-header" id="scorerSkipBtn" style="flex:1; padding:10px; font-weight:700;" onclick="closeModal('scorerModal')">Skip</button>
+        <button class="btn-header" style="flex:1.4; padding:10px; background:#238636; color:#fff; font-weight:800;" onclick="confirmScorerModal()">Save #</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Match History / Tournament Archive -->
+  <div class="modal" id="archiveModal">
+    <div class="modal-content" style="max-width: 560px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 style="color:#58a6ff; font-size:1.05rem;">🗂️ Match History &amp; Tournament</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem;" onclick="closeModal('archiveModal')">✕</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label for="tournamentLabelInput" style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">Turnier / Platz / Altersklasse (optional für Tages-Export):</label>
+        <input type="text" id="tournamentLabelInput" class="text-input-modal" style="font-size:0.88rem; padding:7px 9px;" maxlength="60" placeholder="z. B. U12 Turnier • Platz 2" oninput="saveTournamentLabel(this.value)">
+      </div>
+
+      <button type="button" class="btn-header" id="btnArchiveCurrentNow" style="background:#238636; color:#fff; padding:9px; font-weight:800; font-size:0.82rem;" onclick="manualArchiveCurrentMatch()">💾 Aktuelles Spiel jetzt sichern</button>
+
+      <div class="archive-list-wrap" id="archiveListContainer"></div>
+
+      <div style="display:flex; gap:8px; margin-top:2px;">
+        <button type="button" class="btn-header" id="btnClearArchive" style="flex:1; padding:9px; color:#f85149; border-color:rgba(248,81,73,0.45);" onclick="promptClearArchive()">🗑️ Verlauf leeren</button>
+        <button type="button" class="btn-header" style="flex:1; padding:9px;" onclick="closeModal('archiveModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Archived Match Detail View -->
+  <div class="modal modal-top" id="archiveDetailModal">
+    <div class="modal-content" style="max-width: 540px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 id="archiveDetailTitle" style="color:#58a6ff; font-size:1.0rem;">Match Details</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem;" onclick="closeModal('archiveDetailModal')">✕</button>
+      </div>
+      <div id="archiveDetailBody" style="display:flex; flex-direction:column; gap:8px; max-height:66vh; overflow-y:auto;"></div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button type="button" class="btn-header" style="flex:1.4; padding:10px; background:#238636; color:#fff; font-weight:800;" onclick="shareCurrentArchiveDetail()">📤 Share / Export Report</button>
+        <button type="button" class="btn-header" style="flex:1; padding:10px;" onclick="closeModal('archiveDetailModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function generateSquad() {
       const squad = [];
@@ -1318,8 +1523,13 @@
       homeName: "Home", awayName: "Away",
       homeColor: "#388bfd", awayColor: "#f85149",
       homeScore: 0, awayScore: 0,
-      homeStats: { t: 0, pt: 0, c: 0, p: 0, d: 0 },
-      awayStats: { t: 0, pt: 0, c: 0, p: 0, d: 0 },
+      homeStats: { t: 0, pt: 0, c: 0, p: 0, d: 0, mc: 0, dc: 0, mp: 0, md: 0 },
+      awayStats: { t: 0, pt: 0, c: 0, p: 0, d: 0, mc: 0, dc: 0, mp: 0, md: 0 },
+      homePendingConv: 0,
+      awayPendingConv: 0,
+      homePendingPen: false,
+      awayPendingPen: false,
+      currentMatchArchiveId: null,
       periodIdx: 0,
       secondsLeft: 600,
       initialSeconds: 600,
@@ -1362,9 +1572,20 @@
     let playerEditContext = { mode: 'add', teamKey: 'home', oldNum: null, zone: 'bench' };
     let rowSubContext = { mode: 'off', teamKey: 'home', fixedNum: null };
     let pendingConfirmCallback = null;
+    let scorerModalContext = { historyIdx: -1, mode: 'auto' };
+    let activeShareTarget = null;
+    let activeArchiveDetailId = null;
 
     const STORAGE_KEY = 'rugby_match_state_v1';
+    const ARCHIVE_STORAGE_KEY = 'rugby_match_archive_v1';
+    const MISSED_KICKS_KEY = 'rugby_track_missed_kicks';
+    const ASK_SCORER_KEY = 'rugby_ask_scorer';
+    const TOURNAMENT_LABEL_KEY = 'rugby_tournament_label';
+    const MAX_ARCHIVE_ENTRIES = 50;
     const periods = ["1st Half", "2nd Half", "Full Time"];
+
+    let trackMissedKicks = localStorage.getItem(MISSED_KICKS_KEY) === 'true';
+    let askScorer = localStorage.getItem(ASK_SCORER_KEY) === 'true';
 
     const standardColors = [
       { name: "Blue", hex: "#388bfd" }, { name: "Navy", hex: "#0969da" },
@@ -1531,6 +1752,9 @@
       document.getElementById('menuViewLabel').textContent = state.viewMode === 'adult' ? 'Full' : 'Youth';
       document.getElementById('menuLayoutLabel').textContent = 
         state.layoutMode === 'landscape' ? 'Landscape' : (state.layoutMode === 'portrait' ? 'Portrait' : 'Auto');
+      document.getElementById('menuMissedKicksLabel').textContent = trackMissedKicks ? 'On' : 'Off';
+      document.getElementById('menuAskScorerLabel').textContent = askScorer ? 'On' : 'Off';
+      updateArchiveCountBadge();
     }
 
     function closeDrawer() {
@@ -1574,7 +1798,7 @@
       if (state.homeName !== 'Home' || state.awayName !== 'Away') return true;
       if (state.homeSubsCount > 0 || state.awaySubsCount > 0) return true;
       const hasCardOrTimer = ['home', 'away'].some(tk =>
-        Array.isArray(state.squads[tk]) && state.squads[tk].some(p => p.timerSec > 0 || (p.yellowCount && p.yellowCount > 0))
+        Array.isArray(state.squads[tk]) && state.squads[tk].some(p => p.timerSec > 0 || p.status === 'sinbin_ready' || (p.yellowCount && p.yellowCount > 0))
       );
       if (hasCardOrTimer) return true;
       const openModal = Array.from(document.querySelectorAll('.modal')).some(m => m.style.display === 'flex');
@@ -1716,6 +1940,27 @@
         document.body.classList.remove('view-youth');
         document.body.classList.add('view-adult');
       }
+      applyFeaturePrefs();
+    }
+
+    function applyFeaturePrefs() {
+      document.body.classList.toggle('track-missed-kicks', trackMissedKicks);
+      const mkLbl = document.getElementById('menuMissedKicksLabel');
+      if (mkLbl) mkLbl.textContent = trackMissedKicks ? 'On' : 'Off';
+      const asLbl = document.getElementById('menuAskScorerLabel');
+      if (asLbl) asLbl.textContent = askScorer ? 'On' : 'Off';
+    }
+
+    function toggleTrackMissedKicks() {
+      trackMissedKicks = !trackMissedKicks;
+      try { localStorage.setItem(MISSED_KICKS_KEY, String(trackMissedKicks)); } catch (e) {}
+      applyFeaturePrefs();
+    }
+
+    function toggleAskScorer() {
+      askScorer = !askScorer;
+      try { localStorage.setItem(ASK_SCORER_KEY, String(askScorer)); } catch (e) {}
+      applyFeaturePrefs();
     }
 
     /* === World Rugby Law 3 & Law 9 Timer Engine (Playing Time vs. Actual Time) === */
@@ -1735,12 +1980,12 @@
               const expiredType = p.timerType;
               triggerAirhornShort3();
               if (expiredType === 'SinBin' || expiredType === 'YellowReview') {
-                p.status = 'field';
-                p.timerType = null;
-                showToast(`⏱ SIN BIN ENDED: ${teamLabel} #${p.number} may return to the pitch!`, '#e3b341', 12000);
+                p.status = 'sinbin_ready';
+                p.timerType = 'SinBinReady';
+                showToast(`✅ SIN BIN ENDED: ${teamLabel} #${p.number} ready to return! Tap "✓ On" at next stoppage.`, '#2ea043', 0);
               } else if (expiredType === 'Red20') {
                 p.timerType = null;
-                showToast(`🟥 20-MIN RED EXPIRED (Law 9.30): ${teamLabel} may bring on a replacement for #${p.number}!`, '#f85149', 14000);
+                showToast(`🟥 20-MIN RED EXPIRED (Law 9.30): ${teamLabel} may bring on a replacement for #${p.number}!`, '#f85149', 0);
               } else if (expiredType === 'Blood') {
                 p.status = 'injured_off';
                 p.timerType = null;
@@ -1845,7 +2090,11 @@
         pt: Number.isFinite(src.pt) && src.pt >= 0 ? Math.floor(src.pt) : 0,
         c: Number.isFinite(src.c) && src.c >= 0 ? Math.floor(src.c) : 0,
         p: Number.isFinite(src.p) && src.p >= 0 ? Math.floor(src.p) : 0,
-        d: Number.isFinite(src.d) && src.d >= 0 ? Math.floor(src.d) : 0
+        d: Number.isFinite(src.d) && src.d >= 0 ? Math.floor(src.d) : 0,
+        mc: Number.isFinite(src.mc) && src.mc >= 0 ? Math.floor(src.mc) : 0,
+        dc: Number.isFinite(src.dc) && src.dc >= 0 ? Math.floor(src.dc) : 0,
+        mp: Number.isFinite(src.mp) && src.mp >= 0 ? Math.floor(src.mp) : 0,
+        md: Number.isFinite(src.md) && src.md >= 0 ? Math.floor(src.md) : 0
       };
     }
 
@@ -1886,6 +2135,11 @@
         state.awayScore = Number.isFinite(state.awayScore) && state.awayScore >= 0 ? Math.floor(state.awayScore) : 0;
         state.homeStats = sanitizeStats(state.homeStats);
         state.awayStats = sanitizeStats(state.awayStats);
+        state.homePendingConv = Number.isFinite(state.homePendingConv) && state.homePendingConv >= 0 ? Math.floor(state.homePendingConv) : 0;
+        state.awayPendingConv = Number.isFinite(state.awayPendingConv) && state.awayPendingConv >= 0 ? Math.floor(state.awayPendingConv) : 0;
+        state.homePendingPen = Boolean(state.homePendingPen);
+        state.awayPendingPen = Boolean(state.awayPendingPen);
+        state.currentMatchArchiveId = (typeof state.currentMatchArchiveId === 'string' && state.currentMatchArchiveId.trim()) ? state.currentMatchArchiveId : null;
         state.periodIdx = Number.isInteger(state.periodIdx) && state.periodIdx >= 0 && state.periodIdx < periods.length ? state.periodIdx : 0;
         state.initialSeconds = Number.isFinite(state.initialSeconds) && state.initialSeconds >= 0 ? Math.floor(state.initialSeconds) : 600;
         state.halfDurationSeconds = Number.isFinite(state.halfDurationSeconds) && state.halfDurationSeconds > 0 ? Math.floor(state.halfDurationSeconds) : (state.initialSeconds || 600);
@@ -2035,7 +2289,13 @@
       render();
     }
 
-    /* === Scoring, Penalty Try (Law 8.3) & Dedicated Correction Menu === */
+    /* === Scoring, Conversion Coupling, Missed Kicks & Optional Scorer === */
+    function formatHistoryType(h) {
+      if (!h) return '';
+      const base = h.type || '';
+      return h.scorerNum ? `${base} (#${h.scorerNum})` : base;
+    }
+
     function score(team, val, type, explicitStatKey = null) {
       const currentScore = team === 'home' ? state.homeScore : state.awayScore;
       if (val < 0 && currentScore <= 0) {
@@ -2055,6 +2315,14 @@
         else if (Math.abs(val) === 3) statKey = 'd';
       }
 
+      const pendingKey = team === 'home' ? 'homePendingConv' : 'awayPendingConv';
+      const prevPending = state[pendingKey] || 0;
+
+      if (val === 2 && statKey === 'c' && prevPending <= 0) {
+        showToast("Score a Try first before adding a Conversion.", "#e3b341", 3000);
+        return;
+      }
+
       if (statKey && typeof stats[statKey] === 'number') {
         if (val < 0 && stats[statKey] <= 0) {
           showToast(`No ${type} recorded to deduct.`, "#e3b341", 3000);
@@ -2062,6 +2330,19 @@
         }
         stats[statKey] = Math.max(0, stats[statKey] + statDelta);
       }
+
+      let nextPending = prevPending;
+      if (val === 5 && statKey === 't') {
+        nextPending = prevPending + 1;
+      } else if (val === -5 && statKey === 't') {
+        nextPending = Math.max(0, prevPending - 1);
+      } else if (val === 2 && statKey === 'c') {
+        nextPending = Math.max(0, prevPending - 1);
+      } else if (val === -2 && statKey === 'c') {
+        nextPending = Math.min(stats.t || 0, prevPending + 1);
+      }
+      const pendingConvDelta = nextPending - prevPending;
+      state[pendingKey] = nextPending;
 
       const newScore = Math.max(0, currentScore + val);
       const actualValDelta = newScore - currentScore;
@@ -2077,6 +2358,8 @@
         val: actualValDelta,
         statKey,
         statDelta,
+        pendingConvDelta,
+        scorerNum: null,
         type: val < 0 ? `Corr. ${type} (${val})` : `${type} (+${val})`,
         period: periods[state.periodIdx],
         time: `${min}'`,
@@ -2090,6 +2373,129 @@
       }
 
       render();
+
+      if (val > 0 && askScorer && ['t', 'c', 'p', 'd'].includes(statKey)) {
+        openScorerModal(state.history.length - 1, 'auto');
+      }
+    }
+
+    function openPenaltyOutcome(team) {
+      const penKey = team === 'home' ? 'homePendingPen' : 'awayPendingPen';
+      state[penKey] = !state[penKey];
+      render();
+    }
+
+    function resolvePenaltyOutcome(team, outcome) {
+      const penKey = team === 'home' ? 'homePendingPen' : 'awayPendingPen';
+      state[penKey] = false;
+      if (outcome === 'made') {
+        score(team, 3, 'Penalty', 'p');
+      } else {
+        recordKickOutcome(team, 'mp', 'Missed Penalty');
+      }
+    }
+
+    function cancelPenaltyOutcome(team) {
+      const penKey = team === 'home' ? 'homePendingPen' : 'awayPendingPen';
+      state[penKey] = false;
+      render();
+    }
+
+    function recordKickOutcome(team, statKey, label) {
+      const pendingKey = team === 'home' ? 'homePendingConv' : 'awayPendingConv';
+      const prevPending = state[pendingKey] || 0;
+      const isConvOutcome = (statKey === 'mc' || statKey === 'dc');
+
+      if (isConvOutcome && prevPending <= 0) return;
+
+      const stats = team === 'home' ? state.homeStats : state.awayStats;
+      stats[statKey] = (stats[statKey] || 0) + 1;
+
+      const nextPending = isConvOutcome ? Math.max(0, prevPending - 1) : prevPending;
+      const pendingConvDelta = nextPending - prevPending;
+      state[pendingKey] = nextPending;
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      const icon = statKey === 'dc' ? '⊘' : '✗';
+      state.history.push({
+        actionType: 'kick_outcome',
+        team,
+        teamName: team === 'home' ? state.homeName : state.awayName,
+        val: 0,
+        statKey,
+        statDelta: 1,
+        pendingConvDelta,
+        type: `${icon} ${label}`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+
+      render();
+    }
+
+    function openScorerModal(historyIdx, mode = 'edit') {
+      const item = state.history[historyIdx];
+      if (!item) return;
+      scorerModalContext = { historyIdx, mode };
+      document.getElementById('scorerModalTitle').textContent = `🏃 Scorer # — ${item.teamName}`;
+      document.getElementById('scorerModalDesc').textContent = `${item.time} [${item.period}] ${item.type}`;
+      const inp = document.getElementById('scorerNumInput');
+      inp.value = item.scorerNum ? String(item.scorerNum) : '';
+
+      const clearBtn = document.getElementById('scorerClearBtn');
+      const skipBtn = document.getElementById('scorerSkipBtn');
+      if (mode === 'auto') {
+        clearBtn.style.display = 'none';
+        skipBtn.textContent = 'Skip';
+      } else {
+        clearBtn.style.display = item.scorerNum ? 'inline-flex' : 'none';
+        skipBtn.textContent = 'Cancel';
+      }
+
+      document.getElementById('scorerModal').style.display = 'flex';
+      setTimeout(() => inp.focus(), 60);
+    }
+
+    function confirmScorerModal() {
+      const { historyIdx, mode } = scorerModalContext;
+      const item = state.history[historyIdx];
+      if (!item) { closeModal('scorerModal'); return; }
+      const rawVal = document.getElementById('scorerNumInput').value.trim();
+      if (!rawVal) {
+        if (mode === 'auto') {
+          closeModal('scorerModal');
+          return;
+        }
+        item.scorerNum = null;
+        closeModal('scorerModal');
+        saveStateToStorage();
+        if (document.getElementById('histModal').style.display === 'flex') openHistoryModal();
+        return;
+      }
+      const num = parseJerseyNumber(rawVal);
+      if (!num) {
+        showToast("Please enter a valid jersey number (1–999).", "#f85149", 3000);
+        document.getElementById('scorerNumInput').focus();
+        return;
+      }
+      item.scorerNum = num;
+      closeModal('scorerModal');
+      saveStateToStorage();
+      if (document.getElementById('histModal').style.display === 'flex') openHistoryModal();
+    }
+
+    function clearScorerModal() {
+      const { historyIdx } = scorerModalContext;
+      const item = state.history[historyIdx];
+      if (item) {
+        item.scorerNum = null;
+        saveStateToStorage();
+      }
+      closeModal('scorerModal');
+      if (document.getElementById('histModal').style.display === 'flex') openHistoryModal();
     }
 
     function openCorrectionModal(teamKey) {
@@ -2134,13 +2540,22 @@
       }
       const last = state.history.pop();
 
-      if (last.actionType === 'score' || (!last.actionType && last.val !== 0)) {
+      if (last.actionType === 'score' || last.actionType === 'kick_outcome' || (!last.actionType && last.val !== 0)) {
         const stats = last.team === 'home' ? state.homeStats : state.awayStats;
         if (last.statKey && last.statDelta && typeof stats[last.statKey] === 'number') {
           stats[last.statKey] = Math.max(0, stats[last.statKey] - last.statDelta);
         }
-        if (last.team === 'home') state.homeScore = Math.max(0, state.homeScore - last.val);
-        else if (last.team === 'away') state.awayScore = Math.max(0, state.awayScore - last.val);
+        if (last.team === 'home') {
+          state.homeScore = Math.max(0, state.homeScore - (last.val || 0));
+          if (typeof last.pendingConvDelta === 'number') {
+            state.homePendingConv = Math.max(0, (state.homePendingConv || 0) - last.pendingConvDelta);
+          }
+        } else if (last.team === 'away') {
+          state.awayScore = Math.max(0, state.awayScore - (last.val || 0));
+          if (typeof last.pendingConvDelta === 'number') {
+            state.awayPendingConv = Math.max(0, (state.awayPendingConv || 0) - last.pendingConvDelta);
+          }
+        }
       } else if (last.actionType === 'card_or_sub' && last.squadSnapshot) {
         state.squads[last.team] = JSON.parse(last.squadSnapshot);
         if (typeof last.prevHomeSubs === 'number') state.homeSubsCount = last.prevHomeSubs;
@@ -2412,6 +2827,39 @@
       openCardIssueModal(teamKey, 'red_20', playerNum);
     }
 
+    function confirmSinBinReturn(teamKey, playerNum) {
+      const p = state.squads[teamKey].find(x => x.number === playerNum);
+      if (!p) return;
+      const snapshot = JSON.stringify(state.squads[teamKey]);
+      const prevHomeSubs = state.homeSubsCount;
+      const prevAwaySubs = state.awaySubsCount;
+
+      p.status = 'field';
+      p.timerSec = 0;
+      p.timerType = null;
+
+      const elapsed = state.initialSeconds - state.secondsLeft;
+      const min = Math.max(1, Math.floor(elapsed / 60) + 1);
+      const teamLabel = teamKey === 'home' ? state.homeName : state.awayName;
+      state.history.push({
+        actionType: 'card_or_sub',
+        team: teamKey,
+        teamName: teamLabel,
+        squadSnapshot: snapshot,
+        prevHomeSubs,
+        prevAwaySubs,
+        val: 0,
+        type: `✅ #${playerNum} returned from Sin Bin`,
+        period: periods[state.periodIdx],
+        time: `${min}'`,
+        hScore: state.homeScore,
+        aScore: state.awayScore
+      });
+
+      if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      render();
+    }
+
     function cancelTimerEarly(teamKey, playerNum) {
       const p = state.squads[teamKey].find(x => x.number === playerNum);
       if (p) {
@@ -2553,7 +3001,7 @@
       const pOff = ensurePlayerInSquad(teamKey, offNum, 'field');
       const pOn = ensurePlayerInSquad(teamKey, onNum, 'bench');
 
-      if (pOn.status === 'red_card' || pOn.status === 'sinbin' || pOn.status === 'injured_off') {
+      if (pOn.status === 'red_card' || pOn.status === 'sinbin' || pOn.status === 'sinbin_ready' || pOn.status === 'injured_off') {
         showToast(`#${onNum} is ${pOn.status.toUpperCase()} and cannot enter the pitch!`, '#f85149', 5000);
         return false;
       }
@@ -2816,6 +3264,9 @@
           } else if (p.status === 'hia_bin') {
             statusHtml = `<span class="status-tag temp">🧠 HIA${timeSpan}</span>`;
             actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff;" onclick="returnTempPlayerToPitch('${tk}', ${p.number})">↩ Return</button>`;
+          } else if (p.status === 'sinbin_ready') {
+            statusHtml = `<span class="status-tag ready">✅ Sin Bin Ready</span>`;
+            actionHtml = `<button class="btn-action-small" style="background:#238636; color:#fff; border-color:#2ea043;" onclick="confirmSinBinReturn('${tk}', ${p.number})">↩ Back On</button>`;
           } else if (p.status === 'sinbin') {
             if (p.timerType === 'YellowReview') {
               statusHtml = `<span class="status-tag review">🟨➔🟥 Review${timeSpan}</span>`;
@@ -2973,8 +3424,21 @@
     }
 
     function formatStatsText(s) {
-      const ptPart = (s.pt && s.pt > 0) ? ` ${s.pt}PT` : '';
-      return `${s.t}T${ptPart} ${s.c}C ${s.p}P ${s.d}D`;
+      const safe = s || { t: 0, pt: 0, c: 0, p: 0, d: 0 };
+      const ptPart = (safe.pt && safe.pt > 0) ? ` ${safe.pt}PT` : '';
+      return `${safe.t || 0}T${ptPart} ${safe.c || 0}C ${safe.p || 0}P ${safe.d || 0}D`;
+    }
+
+    function formatMissedStatsText(s) {
+      if (!s) return '';
+      const parts = [];
+      if (s.mc > 0) parts.push(`${s.mc}C`);
+      if (s.mp > 0) parts.push(`${s.mp}P`);
+      if (s.md > 0) parts.push(`${s.md}D`);
+      const out = [];
+      if (parts.length > 0) out.push(`Miss: ${parts.join(' ')}`);
+      if (s.dc > 0) out.push(`Decl: ${s.dc}C`);
+      return out.join(' • ');
     }
 
     function updateClockUI() {
@@ -3054,6 +3518,32 @@
 
       updateClockUI();
 
+      ['home', 'away'].forEach(tk => {
+        const pending = tk === 'home' ? (state.homePendingConv || 0) : (state.awayPendingConv || 0);
+        const convBtn = document.getElementById(`${tk}ConvBtn`);
+        const convSub = document.getElementById(`${tk}ConvSub`);
+        const convActions = document.getElementById(`${tk}ConvActions`);
+        if (convBtn) {
+          convBtn.disabled = pending <= 0;
+          convBtn.classList.toggle('conv-pending', pending > 0);
+        }
+        if (convSub) {
+          convSub.textContent = pending > 1 ? `Conv (${pending})` : 'Conv';
+        }
+        if (convActions) {
+          convActions.classList.toggle('visible', pending > 0);
+        }
+        const pendingPen = tk === 'home' ? Boolean(state.homePendingPen) : Boolean(state.awayPendingPen);
+        const penBtn = document.getElementById(`${tk}PenBtn`);
+        const penActions = document.getElementById(`${tk}PenActions`);
+        if (penBtn) {
+          penBtn.classList.toggle('conv-pending', pendingPen);
+        }
+        if (penActions) {
+          penActions.classList.toggle('visible', pendingPen);
+        }
+      });
+
       const ehBtn = document.getElementById('endHalfBtn');
       if (ehBtn) {
         ehBtn.textContent = state.periodIdx === 0 ? "🏁 End 1st Half" : (state.periodIdx === 1 ? "🏁 Full Time" : "🏁 Finished");
@@ -3071,9 +3561,9 @@
 
       ['home', 'away'].forEach(tk => {
         state.squads[tk].forEach(p => {
-          if (p.timerSec > 0) {
+          if (p.timerSec > 0 || p.status === 'sinbin_ready') {
             activeCount++;
-            sigParts.push(`${tk}:${p.number}:${p.timerType || ''}`);
+            sigParts.push(`${tk}:${p.number}:${p.timerType || ''}:${p.status}`);
           }
         });
       });
@@ -3106,7 +3596,17 @@
         const c = tk === 'home' ? hl : al;
         if (!c) return;
         state.squads[tk].forEach(p => {
-          if (p.timerSec > 0) {
+          if (p.status === 'sinbin_ready') {
+            const pill = document.createElement('div');
+            pill.className = 'timer-pill sinbin-ready';
+            pill.innerHTML = `
+              <span>✅ <strong>#${p.number}</strong> BACK ON?</span>
+              <div class="timer-pill-adjust">
+                <button type="button" class="btn-pill-small btn-pill-ready" onclick="confirmSinBinReturn('${tk}', ${p.number})">✓ On</button>
+              </div>
+            `;
+            c.appendChild(pill);
+          } else if (p.timerSec > 0) {
             const pill = document.createElement('div');
             let pillClass = 'sinbin';
             let icon = '🟨';
@@ -3160,25 +3660,35 @@
       return lines;
     }
 
-    function generateCanvas() {
+    function getShareTarget() {
+      return activeShareTarget || state;
+    }
+
+    function generateCanvas(matchData = null) {
+      const data = matchData || getShareTarget();
       const canvas = document.getElementById('shareCanvas');
       const ctx = canvas.getContext('2d');
 
-      const homeColorCanvas = getReadableOnDark(state.homeColor);
-      const awayColorCanvas = getReadableOnDark(state.awayColor);
+      const homeColorCanvas = getReadableOnDark(data.homeColor || '#388bfd');
+      const awayColorCanvas = getReadableOnDark(data.awayColor || '#f85149');
+      const hist = Array.isArray(data.history) ? data.history : [];
+      const hStats = sanitizeStats(data.homeStats);
+      const aStats = sanitizeStats(data.awayStats);
+      const hMissed = formatMissedStatsText(hStats);
+      const aMissed = formatMissedStatsText(aStats);
 
       ctx.font = '14px sans-serif';
-      const commentText = state.comment.trim() || 'No special incidents reported.';
+      const commentText = (data.comment || '').trim() || 'No special incidents reported.';
       const wrappedNotes = wrapCanvasLines(ctx, commentText, 790);
 
       ctx.font = '14px monospace';
       const wrappedHistory = [];
-      if (state.history.length === 0) {
+      if (hist.length === 0) {
         wrappedHistory.push({ color: '#8b949e', text: 'No match events recorded.' });
       } else {
-        state.history.forEach(h => {
+        hist.forEach(h => {
           const col = h.team === 'home' ? homeColorCanvas : (h.team === 'away' ? awayColorCanvas : '#d29922');
-          const fullLine = `• ${h.time} [${h.period}] ${h.teamName}: ${h.type} ➜ ${h.hScore}:${h.aScore}`;
+          const fullLine = `• ${h.time} [${h.period}] ${h.teamName}: ${formatHistoryType(h)} ➜ ${h.hScore}:${h.aScore}`;
           const subLines = wrapCanvasLines(ctx, fullLine, 790);
           subLines.forEach((sl, idx) => {
             wrappedHistory.push({ color: col, text: idx === 0 ? sl : `  ${sl}` });
@@ -3187,7 +3697,7 @@
       }
 
       const headerHeight = 95;
-      const scoreBoxHeight = 170;
+      const scoreBoxHeight = (hMissed || aMissed) ? 186 : 170;
       const gap = 18;
       const histLineHeight = 22;
       const histBoxHeight = 56 + (wrappedHistory.length * histLineHeight);
@@ -3205,11 +3715,15 @@
 
       ctx.fillStyle = '#58a6ff';
       ctx.font = 'bold 24px sans-serif';
-      ctx.fillText(`🏉 RUGBY MATCH REPORT ${state.viewMode === 'youth' ? '(YOUTH)' : ''}`, 32, 45);
+      const tourneySuffix = data.tournamentLabel ? ` • ${data.tournamentLabel}` : '';
+      ctx.fillText(`🏉 RUGBY MATCH REPORT ${data.viewMode === 'youth' ? '(YOUTH)' : ''}${tourneySuffix}`, 32, 45, 836);
 
       ctx.fillStyle = '#8b949e';
       ctx.font = '16px sans-serif';
-      ctx.fillText(`${new Date().toLocaleDateString('en-GB')} • Status: ${periods[state.periodIdx]} • Subs: H ${state.homeSubsCount}/8 | A ${state.awaySubsCount}/8`, 32, 75);
+      const dateObj = data.savedAt ? new Date(data.savedAt) : new Date();
+      const dateStr = isNaN(dateObj.getTime()) ? new Date().toLocaleDateString('en-GB') : dateObj.toLocaleDateString('en-GB');
+      const statusLabel = periods[data.periodIdx] || periods[0];
+      ctx.fillText(`${dateStr} • Status: ${statusLabel} • Subs: H ${data.homeSubsCount || 0}/8 | A ${data.awaySubsCount || 0}/8`, 32, 75, 836);
 
       let yPos = headerHeight;
       ctx.fillStyle = '#161b22';
@@ -3219,23 +3733,32 @@
       ctx.font = 'bold 28px sans-serif';
       ctx.textAlign = 'left';
       ctx.fillStyle = homeColorCanvas;
-      ctx.fillText(state.homeName, 55, yPos + 45, 270);
+      ctx.fillText(data.homeName || 'Home', 55, yPos + 45, 270);
 
       ctx.textAlign = 'right';
       ctx.fillStyle = awayColorCanvas;
-      ctx.fillText(state.awayName, 845, yPos + 45, 270);
+      ctx.fillText(data.awayName || 'Away', 845, yPos + 45, 270);
 
       ctx.font = '15px sans-serif';
       ctx.fillStyle = '#8b949e';
       ctx.textAlign = 'left';
-      ctx.fillText(formatStatsText(state.homeStats), 55, yPos + 72, 270);
+      ctx.fillText(formatStatsText(hStats), 55, yPos + 72, 270);
       ctx.textAlign = 'right';
-      ctx.fillText(formatStatsText(state.awayStats), 845, yPos + 72, 270);
+      ctx.fillText(formatStatsText(aStats), 845, yPos + 72, 270);
+
+      if (hMissed || aMissed) {
+        ctx.font = '13px sans-serif';
+        ctx.fillStyle = '#d29922';
+        ctx.textAlign = 'left';
+        if (hMissed) ctx.fillText(hMissed, 55, yPos + 94, 270);
+        ctx.textAlign = 'right';
+        if (aMissed) ctx.fillText(aMissed, 845, yPos + 94, 270);
+      }
 
       ctx.textAlign = 'center';
       ctx.font = 'bold 64px sans-serif';
       ctx.fillStyle = '#f0f6fc';
-      ctx.fillText(`${state.homeScore} : ${state.awayScore}`, 450, yPos + 118, 300);
+      ctx.fillText(`${data.homeScore || 0} : ${data.awayScore || 0}`, 450, yPos + ((hMissed || aMissed) ? 132 : 118), 300);
       ctx.textAlign = 'left';
 
       yPos += scoreBoxHeight + gap;
@@ -3270,28 +3793,44 @@
       wrappedNotes.forEach(l => { ctx.fillText(l, 55, cy); cy += 22; });
     }
 
-    function buildReportText() {
-      let t = `🏉 *Rugby Match Report*\n*${state.homeName}* ${state.homeScore} : ${state.awayScore} *${state.awayName}*\n`;
-      t += `(${formatStatsText(state.homeStats)} vs ${formatStatsText(state.awayStats)})\n\n`;
-      if (state.history.length > 0) {
-        t += `📜 *Match Timeline:*\n`;
-        state.history.forEach(h => { t += `• ${h.time} ${h.teamName}: ${h.type} ➜ ${h.hScore}:${h.aScore}\n`; });
+    function buildReportText(matchData = null) {
+      const data = matchData || getShareTarget();
+      const hist = Array.isArray(data.history) ? data.history : [];
+      const hStats = sanitizeStats(data.homeStats);
+      const aStats = sanitizeStats(data.awayStats);
+      const hMissed = formatMissedStatsText(hStats);
+      const aMissed = formatMissedStatsText(aStats);
+      const labelLine = data.tournamentLabel ? ` (${data.tournamentLabel})` : '';
+
+      let t = `🏉 *Rugby Match Report*${labelLine}\n*${data.homeName}* ${data.homeScore} : ${data.awayScore} *${data.awayName}*\n`;
+      t += `(${formatStatsText(hStats)} vs ${formatStatsText(aStats)})\n`;
+      if (hMissed || aMissed) {
+        t += `Kicks: ${hMissed || '-'} | ${aMissed || '-'}\n`;
       }
-      if (state.comment.trim()) t += `\n📝 *Notes:*\n${state.comment.trim()}\n`;
+      t += `\n`;
+      if (hist.length > 0) {
+        t += `📜 *Match Timeline:*\n`;
+        hist.forEach(h => { t += `• ${h.time} ${h.teamName}: ${formatHistoryType(h)} ➜ ${h.hScore}:${h.aScore}\n`; });
+      }
+      if ((data.comment || '').trim()) t += `\n📝 *Notes:*\n${data.comment.trim()}\n`;
       return t;
     }
 
-    function shareWhatsAppText() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildReportText())}`, '_blank'); }
+    function shareWhatsAppText(customText = null) {
+      const text = typeof customText === 'string' ? customText : buildReportText(getShareTarget());
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
     function shareImage() {
+      const data = getShareTarget();
       const c = document.getElementById('shareCanvas');
       c.toBlob(b => {
         if (!b) {
           showToast('Could not generate report image.', '#f85149', 4000);
           return;
         }
-        const file = new File([b], `match-${state.homeScore}-${state.awayScore}.png`, { type: 'image/png' });
+        const file = new File([b], `match-${data.homeScore}-${data.awayScore}.png`, { type: 'image/png' });
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], text: buildReportText() }).catch((err) => {
+          navigator.share({ files: [file], text: buildReportText(data) }).catch((err) => {
             if (!err || err.name !== 'AbortError') {
               downloadImage();
               showToast('Image downloaded (direct sharing unavailable).', '#58a6ff', 3500);
@@ -3304,12 +3843,13 @@
       });
     }
     function downloadImage() {
+      const data = getShareTarget();
       const a = document.createElement('a');
-      a.download = `match-${state.homeScore}-${state.awayScore}.png`;
+      a.download = `match-${data.homeScore}-${data.awayScore}.png`;
       a.href = document.getElementById('shareCanvas').toDataURL();
       a.click();
     }
-    function fallbackCopyText(text) {
+    function fallbackCopyText(text, successMsg = 'Report copied to clipboard!') {
       try {
         const ta = document.createElement('textarea');
         ta.value = text;
@@ -3321,21 +3861,23 @@
         ta.select();
         const ok = document.execCommand('copy');
         document.body.removeChild(ta);
-        if (ok) showToast('Report copied to clipboard!', '#2ea043', 3000);
+        if (ok) showToast(successMsg, '#2ea043', 3000);
         else showToast('Copy failed – please use WhatsApp Text or Save Image.', '#f85149', 4000);
       } catch (e) {
         showToast('Copy failed – please use WhatsApp Text or Save Image.', '#f85149', 4000);
       }
     }
-    function copyShareText() {
-      const text = buildReportText();
+    function copyTextToClipboard(text, successMsg = 'Report copied to clipboard!') {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text)
-          .then(() => showToast('Report copied to clipboard!', '#2ea043', 3000))
-          .catch(() => fallbackCopyText(text));
+          .then(() => showToast(successMsg, '#2ea043', 3000))
+          .catch(() => fallbackCopyText(text, successMsg));
       } else {
-        fallbackCopyText(text);
+        fallbackCopyText(text, successMsg);
       }
+    }
+    function copyShareText() {
+      copyTextToClipboard(buildReportText(getShareTarget()), 'Report copied to clipboard!');
     }
 
     function triggerAirhornShort3() { playTone([0.14, 0.14, 0.14]); }
@@ -3361,7 +3903,16 @@
       } catch(e) {}
     }
 
-    function openShareModal() { saveComment(); generateCanvas(); document.getElementById('shareModal').style.display = 'flex'; }
+    function openShareModal(matchData = null) {
+      if (!matchData) {
+        saveComment();
+        activeShareTarget = null;
+      } else {
+        activeShareTarget = matchData;
+      }
+      generateCanvas(getShareTarget());
+      document.getElementById('shareModal').style.display = 'flex';
+    }
     function openTimeModal() {
       pendingTimeModalYellowMin = null;
       const absSec = Math.max(0, state.secondsLeft);
@@ -3393,13 +3944,410 @@
     }
     function openHistoryModal() {
       const el = document.getElementById('histList');
-      el.innerHTML = state.history.length === 0 ? '<div style="color:var(--text-muted);text-align:center;">No match events yet.</div>' :
-        state.history.map(h => `<div class="history-item"><span><strong>${escapeHtml(h.time)}</strong> [${escapeHtml(h.period)}] ${escapeHtml(h.teamName)}: ${escapeHtml(h.type)}</span><strong>${escapeHtml(h.hScore)}:${escapeHtml(h.aScore)}</strong></div>`).join('');
+      if (state.history.length === 0) {
+        el.innerHTML = '<div style="color:var(--text-muted);text-align:center;">No match events yet.</div>';
+      } else {
+        el.innerHTML = state.history.map((h, idx) => {
+          const isEditable = (h.actionType === 'score' && h.val > 0 && h.statKey !== 'pt');
+          const scorerBadge = isEditable
+            ? (h.scorerNum
+                ? `<span class="scorer-tag">#${escapeHtml(h.scorerNum)} ✎</span>`
+                : `<span class="scorer-tag empty">+#</span>`)
+            : '';
+          const clickAttr = isEditable ? `onclick="openScorerModal(${idx}, 'edit')"` : '';
+          const cls = isEditable ? 'history-item editable-score' : 'history-item';
+          return `<div class="${cls}" ${clickAttr}><span><strong>${escapeHtml(h.time)}</strong> [${escapeHtml(h.period)}] ${escapeHtml(h.teamName)}: ${escapeHtml(h.type)}${scorerBadge}</span><strong>${escapeHtml(h.hScore)}:${escapeHtml(h.aScore)}</strong></div>`;
+        }).join('');
+      }
       document.getElementById('histModal').style.display = 'flex';
     }
-    function promptResetAll() { document.getElementById('resetModal').style.display = 'flex'; }
+
+    /* === Match History & Tournament Archive (rugby_match_archive_v1) === */
+    function getTournamentLabel() {
+      try {
+        return (localStorage.getItem(TOURNAMENT_LABEL_KEY) || '').trim();
+      } catch (e) { return ''; }
+    }
+
+    function saveTournamentLabel(val) {
+      try {
+        localStorage.setItem(TOURNAMENT_LABEL_KEY, String(val || '').trim());
+      } catch (e) {}
+    }
+
+    function hasArchivableMatchData() {
+      if (state.homeScore > 0 || state.awayScore > 0) return true;
+      if (Array.isArray(state.history) && state.history.length > 0) return true;
+      if (typeof state.comment === 'string' && state.comment.trim().length > 0) return true;
+      if (state.homeSubsCount > 0 || state.awaySubsCount > 0) return true;
+      return ['home', 'away'].some(tk =>
+        Array.isArray(state.squads[tk]) && state.squads[tk].some(p =>
+          p.timerSec > 0 || p.status === 'sinbin_ready' || p.status === 'red_card' || (p.yellowCount && p.yellowCount > 0)
+        )
+      );
+    }
+
+    function loadMatchArchive() {
+      try {
+        const raw = localStorage.getItem(ARCHIVE_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(item => item && typeof item === 'object' && typeof item.id === 'string');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveMatchArchive(list) {
+      try {
+        const trimmed = Array.isArray(list) ? list.slice(0, MAX_ARCHIVE_ENTRIES) : [];
+        localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(trimmed));
+        updateArchiveCountBadge();
+        return true;
+      } catch (e) {
+        if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+          showToast("⚠️ Gerätespeicher voll – Spielverlauf konnte nicht gesichert werden.", "#f85149", 7000);
+        }
+        return false;
+      }
+    }
+
+    function updateArchiveCountBadge() {
+      const badge = document.getElementById('archiveCount');
+      if (badge) badge.textContent = loadMatchArchive().length;
+    }
+
+    function countCardsForArchive() {
+      let yellowCards = 0;
+      let redCards = 0;
+      ['home', 'away'].forEach(tk => {
+        (state.squads[tk] || []).forEach(p => {
+          if (p.yellowCount && p.yellowCount > 0) yellowCards += p.yellowCount;
+          if (p.status === 'red_card') redCards += 1;
+        });
+      });
+      return { yellowCards, redCards };
+    }
+
+    function archiveCurrentMatch(silent = false) {
+      if (!hasArchivableMatchData()) return false;
+      const commentEl = document.getElementById('matchComment');
+      if (commentEl) state.comment = commentEl.value;
+
+      const archive = loadMatchArchive();
+      const archiveId = state.currentMatchArchiveId || (`m_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+      const { yellowCards, redCards } = countCardsForArchive();
+
+      const cleanedHistory = (Array.isArray(state.history) ? state.history : []).map(h => {
+        const copy = { ...h };
+        delete copy.squadSnapshot;
+        return copy;
+      });
+
+      const entry = {
+        id: archiveId,
+        savedAt: new Date().toISOString(),
+        tournamentLabel: getTournamentLabel(),
+        homeName: state.homeName,
+        awayName: state.awayName,
+        homeColor: state.homeColor,
+        awayColor: state.awayColor,
+        homeScore: state.homeScore,
+        awayScore: state.awayScore,
+        homeStats: sanitizeStats(state.homeStats),
+        awayStats: sanitizeStats(state.awayStats),
+        periodIdx: state.periodIdx,
+        viewMode: state.viewMode,
+        homeSubsCount: state.homeSubsCount,
+        awaySubsCount: state.awaySubsCount,
+        yellowCards,
+        redCards,
+        history: cleanedHistory,
+        comment: state.comment || ''
+      };
+
+      const existingIdx = archive.findIndex(x => x.id === archiveId);
+      if (existingIdx !== -1) {
+        archive.splice(existingIdx, 1);
+      }
+      archive.unshift(entry);
+      const ok = saveMatchArchive(archive);
+      if (ok) {
+        state.currentMatchArchiveId = archiveId;
+        saveStateToStorage();
+        if (!silent) {
+          showToast(existingIdx !== -1 ? "🗂️ Gespeichertes Spiel im Verlauf aktualisiert." : "🗂️ Spiel im Verlauf gespeichert!", "#2ea043", 3000);
+        }
+      }
+      return ok;
+    }
+
+    function manualArchiveCurrentMatch() {
+      if (!hasArchivableMatchData()) {
+        showToast("Noch keine Spieldaten zum Speichern vorhanden.", "#8b949e", 2500);
+        return;
+      }
+      archiveCurrentMatch(false);
+      renderArchiveModal();
+    }
+
+    function getLocalDateKey(isoStr) {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return '0000-00-00';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatDisplayDate(dateKey) {
+      const parts = dateKey.split('-');
+      if (parts.length !== 3 || dateKey === '0000-00-00') return dateKey;
+      return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+
+    function formatDisplayTime(isoStr) {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return '--:--';
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function openArchiveModal() {
+      const lblInput = document.getElementById('tournamentLabelInput');
+      if (lblInput) lblInput.value = getTournamentLabel();
+      renderArchiveModal();
+      document.getElementById('archiveModal').style.display = 'flex';
+    }
+
+    function renderArchiveModal() {
+      const archive = loadMatchArchive();
+      const container = document.getElementById('archiveListContainer');
+      const saveNowBtn = document.getElementById('btnArchiveCurrentNow');
+      const clearAllBtn = document.getElementById('btnClearArchive');
+
+      const canSave = hasArchivableMatchData();
+      if (saveNowBtn) {
+        saveNowBtn.disabled = !canSave;
+        saveNowBtn.style.opacity = canSave ? '1' : '0.45';
+        saveNowBtn.textContent = state.currentMatchArchiveId
+          ? '💾 Aktuelles Spiel im Verlauf aktualisieren'
+          : '💾 Aktuelles Spiel jetzt sichern';
+      }
+      if (clearAllBtn) {
+        clearAllBtn.disabled = archive.length === 0;
+        clearAllBtn.style.opacity = archive.length > 0 ? '1' : '0.4';
+      }
+
+      if (archive.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px 8px; font-size:0.84rem;">Noch keine Spiele im Verlauf gespeichert.<br><span style="font-size:0.74rem;">Spiele werden beim Reset („New Match“) automatisch gesichert.</span></div>';
+        return;
+      }
+
+      const groups = new Map();
+      archive.forEach(entry => {
+        const key = getLocalDateKey(entry.savedAt);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(entry);
+      });
+
+      const sortedKeys = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a));
+
+      container.innerHTML = sortedKeys.map(dateKey => {
+        const items = groups.get(dateKey);
+        const cardsHtml = items.map(entry => {
+          const timeStr = formatDisplayTime(entry.savedAt);
+          const badges = [];
+          if (entry.viewMode === 'youth') badges.push('<span class="archive-badge" style="color:#79c0ff;">Youth</span>');
+          if (entry.yellowCards > 0) badges.push(`<span class="archive-badge" style="color:#fce881;">🟨 ${entry.yellowCards}</span>`);
+          if (entry.redCards > 0) badges.push(`<span class="archive-badge" style="color:#ffa198;">🟥 ${entry.redCards}</span>`);
+          if ((entry.comment || '').trim()) badges.push('<span class="archive-badge">📝</span>');
+
+          return `
+            <div class="archive-card" onclick="openArchiveDetail('${escapeHtml(entry.id)}')">
+              <div class="archive-card-main">
+                <div class="archive-match-row">
+                  <span class="archive-dot" style="background:${escapeHtml(entry.homeColor || '#388bfd')};"></span>
+                  <span>${escapeHtml(entry.homeName)}</span>
+                  <span class="archive-score-pill">${escapeHtml(entry.homeScore)} : ${escapeHtml(entry.awayScore)}</span>
+                  <span class="archive-dot" style="background:${escapeHtml(entry.awayColor || '#f85149')};"></span>
+                  <span>${escapeHtml(entry.awayName)}</span>
+                </div>
+                <div class="archive-meta-row">
+                  <span>🕒 ${escapeHtml(timeStr)}</span>
+                  ${badges.join('')}
+                </div>
+              </div>
+              <button type="button" class="btn-pill-small" style="color:#f85149;" title="Spiel löschen" onclick="event.stopPropagation(); promptDeleteArchiveEntry('${escapeHtml(entry.id)}')">🗑️</button>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="archive-date-group">
+            <div class="archive-date-header">
+              <span class="archive-date-title">📅 ${escapeHtml(formatDisplayDate(dateKey))} (${items.length} ${items.length === 1 ? 'Spiel' : 'Spiele'})</span>
+              <div class="archive-day-actions">
+                <button type="button" class="btn-header" style="background:#128c7e; color:#fff; font-size:0.68rem; padding:4px 7px;" onclick="shareDayWhatsApp('${escapeHtml(dateKey)}')">💬 Tag WhatsApp</button>
+                <button type="button" class="btn-header" style="font-size:0.68rem; padding:4px 7px;" onclick="copyDaySummary('${escapeHtml(dateKey)}')">📋 Tag kopieren</button>
+              </div>
+            </div>
+            ${cardsHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openArchiveDetail(entryId) {
+      const entry = loadMatchArchive().find(x => x.id === entryId);
+      if (!entry) return;
+      activeArchiveDetailId = entryId;
+
+      const dateStr = formatDisplayDate(getLocalDateKey(entry.savedAt));
+      const timeStr = formatDisplayTime(entry.savedAt);
+      document.getElementById('archiveDetailTitle').textContent = `🏉 ${entry.homeName} ${entry.homeScore}:${entry.awayScore} ${entry.awayName}`;
+
+      const hStats = sanitizeStats(entry.homeStats);
+      const aStats = sanitizeStats(entry.awayStats);
+      const hMissed = formatMissedStatsText(hStats);
+      const aMissed = formatMissedStatsText(aStats);
+      const hist = Array.isArray(entry.history) ? entry.history : [];
+      const histHtml = hist.length === 0
+        ? '<div style="color:var(--text-muted); font-size:0.8rem;">No match events recorded.</div>'
+        : hist.map(h => `<div class="history-item"><span><strong>${escapeHtml(h.time)}</strong> [${escapeHtml(h.period)}] ${escapeHtml(h.teamName)}: ${escapeHtml(formatHistoryType(h))}</span><strong>${escapeHtml(h.hScore)}:${escapeHtml(h.aScore)}</strong></div>`).join('');
+
+      const noteHtml = (entry.comment || '').trim()
+        ? `<div style="white-space:pre-wrap; font-size:0.8rem; color:#e6edf3;">${escapeHtml(entry.comment.trim())}</div>`
+        : '<div style="font-size:0.78rem; color:var(--text-muted);">No special incidents reported.</div>';
+
+      const tourneyHtml = entry.tournamentLabel
+        ? `<div style="font-size:0.74rem; color:#fce881; font-weight:700;">🏆 ${escapeHtml(entry.tournamentLabel)}</div>`
+        : '';
+
+      document.getElementById('archiveDetailBody').innerHTML = `
+        <div class="archive-detail-box">
+          <div style="display:flex; justify-content:space-between; font-size:0.74rem; color:var(--text-muted);">
+            <span>📅 ${escapeHtml(dateStr)} • ${escapeHtml(timeStr)}</span>
+            <span>${escapeHtml(periods[entry.periodIdx] || 'Match')} ${entry.viewMode === 'youth' ? '• Youth' : ''}</span>
+          </div>
+          ${tourneyHtml}
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:4px 0;">
+            <div style="display:flex; align-items:center; gap:6px; font-weight:800; color:${escapeHtml(getReadableOnDark(entry.homeColor || '#388bfd'))};">
+              <span class="archive-dot" style="background:${escapeHtml(entry.homeColor || '#388bfd')};"></span>
+              <span>${escapeHtml(entry.homeName)}</span>
+            </div>
+            <div style="font-size:1.5rem; font-weight:900; font-family:monospace;">${escapeHtml(entry.homeScore)} : ${escapeHtml(entry.awayScore)}</div>
+            <div style="display:flex; align-items:center; gap:6px; font-weight:800; color:${escapeHtml(getReadableOnDark(entry.awayColor || '#f85149'))};">
+              <span>${escapeHtml(entry.awayName)}</span>
+              <span class="archive-dot" style="background:${escapeHtml(entry.awayColor || '#f85149')};"></span>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
+            <span>${escapeHtml(formatStatsText(hStats))}${hMissed ? ' • ' + escapeHtml(hMissed) : ''}</span>
+            <span>${escapeHtml(formatStatsText(aStats))}${aMissed ? ' • ' + escapeHtml(aMissed) : ''}</span>
+          </div>
+        </div>
+        <div class="archive-detail-box">
+          <div style="font-size:0.76rem; font-weight:800; color:#58a6ff;">📜 MATCH TIMELINE (${hist.length})</div>
+          <div class="history-list" style="max-height:200px; border:none; padding:0;">${histHtml}</div>
+        </div>
+        <div class="archive-detail-box">
+          <div style="font-size:0.76rem; font-weight:800; color:#d29922;">📝 REFEREE NOTES</div>
+          ${noteHtml}
+        </div>
+      `;
+      document.getElementById('archiveDetailModal').style.display = 'flex';
+    }
+
+    function shareCurrentArchiveDetail() {
+      const entry = loadMatchArchive().find(x => x.id === activeArchiveDetailId);
+      if (!entry) return;
+      openShareModal(entry);
+    }
+
+    function promptDeleteArchiveEntry(entryId) {
+      openConfirmActionModal(
+        'Spiel aus Verlauf löschen?',
+        'Dieser gespeicherte Spielbericht wird dauerhaft aus dem lokalen Verlauf entfernt.',
+        () => {
+          const list = loadMatchArchive().filter(x => x.id !== entryId);
+          saveMatchArchive(list);
+          if (state.currentMatchArchiveId === entryId) {
+            state.currentMatchArchiveId = null;
+            saveStateToStorage();
+          }
+          renderArchiveModal();
+        }
+      );
+    }
+
+    function promptClearArchive() {
+      openConfirmActionModal(
+        'Gesamten Verlauf leeren?',
+        'Alle gespeicherten Spiele im Turnierverlauf werden dauerhaft gelöscht. Das aktuell laufende Spiel bleibt unverändert.',
+        () => {
+          saveMatchArchive([]);
+          state.currentMatchArchiveId = null;
+          saveStateToStorage();
+          renderArchiveModal();
+          showToast("🗑️ Spielverlauf geleert.", "#8b949e", 2500);
+        }
+      );
+    }
+
+    function buildDaySummaryText(dateKey) {
+      const all = loadMatchArchive().filter(x => getLocalDateKey(x.savedAt) === dateKey);
+      // Chronological order (oldest first = Game 1, 2, 3...)
+      const ordered = all.slice().sort((a, b) => new Date(a.savedAt) - new Date(b.savedAt));
+      const label = getTournamentLabel() || (ordered.find(x => x.tournamentLabel)?.tournamentLabel || '');
+      const headerTitle = label ? `🏉 *${label}* (${formatDisplayDate(dateKey)})` : `🏉 *Turnierverlauf* (${formatDisplayDate(dateKey)})`;
+
+      let txt = `${headerTitle}\n\n`;
+      ordered.forEach((m, idx) => {
+        const timeStr = formatDisplayTime(m.savedAt);
+        const modeTag = m.viewMode === 'youth' ? ' [Youth]' : '';
+        txt += `${idx + 1}. [${timeStr}] *${m.homeName}* ${m.homeScore} : ${m.awayScore} *${m.awayName}*${modeTag}\n`;
+        const cardParts = [];
+        if (m.yellowCards > 0) cardParts.push(`🟨 ${m.yellowCards}`);
+        if (m.redCards > 0) cardParts.push(`🟥 ${m.redCards}`);
+        if (cardParts.length > 0) {
+          txt += `   Karten: ${cardParts.join(' | ')}\n`;
+        }
+        const noteClean = (m.comment || '').trim().replace(/\s+/g, ' ');
+        if (noteClean) {
+          const shortNote = noteClean.length > 140 ? noteClean.slice(0, 137) + '...' : noteClean;
+          txt += `   📝 ${shortNote}\n`;
+        }
+      });
+      txt += `\nGesamt: ${ordered.length} ${ordered.length === 1 ? 'Spiel' : 'Spiele'}`;
+      return txt;
+    }
+
+    function shareDayWhatsApp(dateKey) {
+      shareWhatsAppText(buildDaySummaryText(dateKey));
+    }
+
+    function copyDaySummary(dateKey) {
+      copyTextToClipboard(buildDaySummaryText(dateKey), 'Turniertag in Zwischenablage kopiert!');
+    }
+
+    function promptResetAll() {
+      const canArchive = hasArchivableMatchData();
+      const wrap = document.getElementById('resetArchiveWrap');
+      const cb = document.getElementById('resetArchiveCheckbox');
+      if (wrap && cb) {
+        wrap.style.display = canArchive ? 'flex' : 'none';
+        cb.checked = canArchive;
+      }
+      document.getElementById('resetModal').style.display = 'flex';
+    }
     
     function confirmResetAll() {
+      const cb = document.getElementById('resetArchiveCheckbox');
+      if (cb && cb.checked && hasArchivableMatchData()) {
+        archiveCurrentMatch(true);
+      }
+
       closeModal('resetModal');
       clearInterval(timerInterval);
       clearInterval(pauseInterval);
@@ -3411,8 +4359,13 @@
       state.awayColor = "#f85149";
       state.homeScore = 0; 
       state.awayScore = 0;
-      state.homeStats = { t:0, pt:0, c:0, p:0, d:0 }; 
-      state.awayStats = { t:0, pt:0, c:0, p:0, d:0 };
+      state.homeStats = { t:0, pt:0, c:0, p:0, d:0, mc:0, dc:0, mp:0, md:0 }; 
+      state.awayStats = { t:0, pt:0, c:0, p:0, d:0, mc:0, dc:0, mp:0, md:0 };
+      state.homePendingConv = 0;
+      state.awayPendingConv = 0;
+      state.homePendingPen = false;
+      state.awayPendingPen = false;
+      state.currentMatchArchiveId = null;
       state.periodIdx = 0; 
       state.secondsLeft = state.halfDurationSeconds || 600;
       state.initialSeconds = state.secondsLeft; 
@@ -3432,6 +4385,7 @@
       
       saveStateToStorage();
       render();
+      updateArchiveCountBadge();
 
       if (pendingAppUpdate && !isRefreshingPage) {
         isRefreshingPage = true;
@@ -3571,6 +4525,9 @@
     document.getElementById('cardJerseyInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') confirmCardIssue();
     });
+    document.getElementById('scorerNumInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmScorerModal();
+    });
     document.getElementById('teamNameInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') confirmTeamName();
     });
@@ -3623,6 +4580,8 @@
     applyLayoutMode();
     loadStateFromStorage();
     render();
+    applyFeaturePrefs();
+    updateArchiveCountBadge();
     requestWakeLock();
     updateInstallButtonVisibility();
     setTimeout(() => { syncViewportHeight(); if (state.layoutMode === 'auto') applyLayoutMode(); }, 150);
