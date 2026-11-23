@@ -927,6 +927,7 @@
       <button class="drawer-btn" onclick="closeDrawer(); openTossModal();">🪙 Coin Toss (Law 6) <span>➔</span></button>
       <button class="drawer-btn" onclick="closeDrawer(); openColorModal('home');">🎨 Home Team Color <span>➔</span></button>
       <button class="drawer-btn" onclick="closeDrawer(); openColorModal('away');">🎨 Away Team Color <span>➔</span></button>
+      <button class="drawer-btn" onclick="closeDrawer(); openSquadImportModal();">📥 Import Squad (CSV) <span>➔</span></button>
     </div>
 
     <div>
@@ -1319,7 +1320,7 @@
               <li><strong>Wechselmenü:</strong> Oben links auf <strong>🔄 Subs</strong> tippen (im Modus <strong>Full</strong>) und zwischen <strong>Home (0/8)</strong> und <strong>Away (0/8)</strong> wählen.</li>
               <li><strong>Schnellwechsel:</strong> Bei <strong>Off #</strong> und <strong>➔ On #</strong> Rückennummern (1–999) eintragen, Grund wählen (<strong>Tactical Sub</strong>, <strong>Injury (Permanent)</strong>, <strong>🩸 Blood Bin (15m Actual)</strong>, <strong>🧠 HIA (12m Actual)</strong>, <strong>Front Row Rep.</strong>) und <strong>✓ Sub</strong> tippen – oder direkt in der Spielerliste <strong>🔄 Sub</strong>, <strong>🩸</strong> bzw. <strong>🧠</strong> nutzen.</li>
               <li><strong>Spielzeit vs. Echtzeit:</strong> Gelbe Karten und 20-Min-Rote Karten pausieren bei <strong>PAUSE</strong>. <strong>🩸 Blood Bin (15m)</strong> und <strong>🧠 HIA (12m)</strong> laufen auch in Spielpausen in Echtzeit weiter und werden bei Ablauf automatisch dauerhaft.</li>
-              <li><strong>Rückkehr &amp; Kader:</strong> Kehrt ein Spieler aus Blood/HIA zurück, in der Bank-Liste <strong>↩ Return</strong> tippen. Auf eine <strong>#Nummer</strong> tippen zum Bearbeiten, <strong>+ Add #</strong> für weitere Spieler, <strong>FR</strong> für Erste Sturmreihe.</li>
+              <li><strong>Rückkehr &amp; Kader (inkl. CSV-Import):</strong> Kehrt ein Spieler aus Blood/HIA zurück, in der Bank-Liste <strong>↩ Return</strong> tippen. Auf eine <strong>#Nummer</strong> tippen zum Bearbeiten, <strong>+ Add #</strong> für weitere Spieler, <strong>FR</strong> für Erste Sturmreihe. Im Menü <strong>☰</strong> unter <strong>📥 Import Squad (CSV)</strong> lassen sich Rückennummern und Namen per <code>.csv</code>-Datei oder Copy &amp; Paste importieren.</li>
             </ul>
           </div>
         </details>
@@ -1498,6 +1499,42 @@
         <button type="button" class="btn-header" style="flex:1.4; padding:10px; background:#238636; color:#fff; font-weight:800;" onclick="shareCurrentArchiveDetail()">📤 Share / Export Report</button>
         <button type="button" class="btn-header" style="flex:1; padding:10px;" onclick="closeModal('archiveDetailModal')">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Squad CSV / Text Import -->
+  <div class="modal" id="squadImportModal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px;">
+        <h3 style="color:#58a6ff; font-size:1.0rem;">📥 Import Squad (CSV / Text)</h3>
+        <button class="btn-pill-small" style="font-size:0.85rem;" onclick="closeModal('squadImportModal')">✕</button>
+      </div>
+
+      <div class="subs-team-tabs">
+        <button type="button" class="subs-tab-btn active" id="importTabHomeBtn" onclick="selectImportTeam('home')">Home</button>
+        <button type="button" class="subs-tab-btn away-tab" id="importTabAwayBtn" onclick="selectImportTeam('away')">Away</button>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; background:#0d1117; border:1px solid var(--border); border-radius:8px; padding:8px;">
+        <div style="font-size:0.74rem; color:var(--text-muted); line-height:1.3;">
+          Format: <strong style="color:#f0f6fc;">#; Name</strong> (optional <strong style="color:#79c0ff;">; FR</strong>)<br>
+          z. B. <code>1; Max Mustermann; FR</code>
+        </div>
+        <label class="btn-header" style="background:#1c2d42; border-color:#388bfd; color:#79c0ff; padding:7px 10px; cursor:pointer; flex-shrink:0;">
+          📂 .CSV Datei
+          <input type="file" id="squadCsvFileInput" accept=".csv,.txt,text/csv,text/plain" style="display:none;" onchange="handleSquadCsvFile(event)">
+        </label>
+      </div>
+
+      <textarea id="squadImportTextarea" style="width:100%; height:145px; background:#0d1117; border:1px solid #30363d; border-radius:7px; color:#f0f6fc; font-family:monospace; font-size:0.8rem; padding:8px; resize:vertical;" placeholder="1; Max Mustermann; FR&#10;2; Lukas Beispiel&#10;10; Finn Flyhalf&#10;16; Jonas Reserve" oninput="updateSquadImportPreview()"></textarea>
+
+      <div id="squadImportPreview" style="font-size:0.74rem; color:var(--text-muted); min-height:18px;"></div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:2px;">
+        <button type="button" class="btn-header" style="background:#238636; color:#fff; padding:9px 6px; font-weight:800; font-size:0.78rem;" onclick="applySquadImport('merge')">➕ Ergänzen / Update</button>
+        <button type="button" class="btn-header" style="background:#1f6feb; color:#fff; padding:9px 6px; font-weight:800; font-size:0.78rem;" onclick="applySquadImport('replace')">🔄 Kader ersetzen</button>
+      </div>
+      <button type="button" class="btn-header" style="padding:8px;" onclick="closeModal('squadImportModal')">Cancel</button>
     </div>
   </div>
 
@@ -2891,6 +2928,185 @@
     }
 
     /* === Law 3 Substitutions & Custom 3-Digit Jersey Management === */
+    let importModalTeam = 'home';
+
+    function openSquadImportModal() {
+      importModalTeam = state.currentSubsTeam === 'away' ? 'away' : 'home';
+      document.getElementById('squadImportTextarea').value = '';
+      const fileInp = document.getElementById('squadCsvFileInput');
+      if (fileInp) fileInp.value = '';
+      selectImportTeam(importModalTeam);
+      updateSquadImportPreview();
+      document.getElementById('squadImportModal').style.display = 'flex';
+    }
+
+    function selectImportTeam(tk) {
+      importModalTeam = tk === 'away' ? 'away' : 'home';
+      const hBtn = document.getElementById('importTabHomeBtn');
+      const aBtn = document.getElementById('importTabAwayBtn');
+      if (hBtn) {
+        hBtn.textContent = state.homeName;
+        hBtn.classList.toggle('active', importModalTeam === 'home');
+      }
+      if (aBtn) {
+        aBtn.textContent = state.awayName;
+        aBtn.classList.toggle('active', importModalTeam === 'away');
+      }
+    }
+
+    function handleSquadCsvFile(evt) {
+      const file = evt && evt.target && evt.target.files ? evt.target.files[0] : null;
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = (e && e.target && typeof e.target.result === 'string') ? e.target.result : '';
+        // Strip UTF-8 BOM if present
+        document.getElementById('squadImportTextarea').value = content.replace(/^\uFEFF/, '');
+        updateSquadImportPreview();
+      };
+      reader.onerror = () => {
+        showToast("Datei konnte nicht gelesen werden.", "#f85149", 3500);
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function splitCsvLine(line, sep) {
+      const cols = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === sep && !inQuotes) {
+          cols.push(cur.trim());
+          cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      cols.push(cur.trim());
+      return cols;
+    }
+
+    function parseSquadCsvText(rawText) {
+      const text = String(rawText || '').replace(/^\uFEFF/, '').trim();
+      if (!text) return { entries: [], skipped: 0 };
+
+      const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const mapByNum = new Map();
+      let skipped = 0;
+
+      rawLines.forEach((line, idx) => {
+        let cols = [];
+        if (line.includes(';')) cols = splitCsvLine(line, ';');
+        else if (line.includes('\t')) cols = splitCsvLine(line, '\t');
+        else if (line.includes(',')) cols = splitCsvLine(line, ',');
+        else {
+          const m = line.match(/^#?\s*(\d{1,3})\s+(.+)$/);
+          if (m) cols = [m[1], m[2]];
+          else cols = [line];
+        }
+
+        const firstClean = (cols[0] || '').replace(/^#/, '').trim();
+        const num = parseJerseyNumber(firstClean);
+        if (!num) {
+          // Ignore typical header line on first row silently
+          if (idx > 0) skipped++;
+          return;
+        }
+
+        const nameRaw = (cols[1] || '').trim().slice(0, 36);
+        const flagRaw = (cols[2] || '').trim().toUpperCase();
+        const hasFrontRowCol = cols.length >= 3 && flagRaw !== '';
+        const isFrontRow = hasFrontRowCol
+          ? ['FR', '1', 'YES', 'JA', 'TRUE', 'X'].includes(flagRaw)
+          : null;
+
+        mapByNum.set(num, {
+          number: num,
+          name: nameRaw,
+          isFrontRow
+        });
+      });
+
+      return {
+        entries: Array.from(mapByNum.values()).sort((a, b) => a.number - b.number),
+        skipped
+      };
+    }
+
+    function updateSquadImportPreview() {
+      const previewEl = document.getElementById('squadImportPreview');
+      if (!previewEl) return;
+      const { entries, skipped } = parseSquadCsvText(document.getElementById('squadImportTextarea').value);
+      if (entries.length === 0) {
+        previewEl.textContent = '';
+        return;
+      }
+      const sample = entries.slice(0, 3).map(e => `#${e.number}${e.name ? ' ' + e.name : ''}`).join(', ');
+      const skipNote = skipped > 0 ? ` (${skipped} ungültige Zeilen übersprungen)` : '';
+      previewEl.innerHTML = `<span style="color:#56d364; font-weight:700;">✓ ${entries.length} Spieler erkannt:</span> ${escapeHtml(sample)}${entries.length > 3 ? ' …' : ''}${escapeHtml(skipNote)}`;
+    }
+
+    function applySquadImport(mode) {
+      const { entries } = parseSquadCsvText(document.getElementById('squadImportTextarea').value);
+      if (entries.length === 0) {
+        showToast("Keine gültigen Spielerzeilen gefunden (Format: Nummer; Name).", "#e3b341", 4000);
+        return;
+      }
+
+      const tk = importModalTeam;
+      const teamLabel = tk === 'home' ? state.homeName : state.awayName;
+
+      if (mode === 'replace') {
+        state.squads[tk] = entries.map((e, idx) => ({
+          number: e.number,
+          position: e.name || (idx < 15 ? `Player ${e.number}` : 'Reserve'),
+          isFrontRow: e.isFrontRow !== null ? e.isFrontRow : ((e.number >= 1 && e.number <= 3) || (e.number >= 16 && e.number <= 18)),
+          status: idx < 15 ? 'field' : 'bench',
+          timerSec: 0,
+          timerType: null,
+          replacedBy: null,
+          yellowCount: 0
+        }));
+      } else {
+        const squad = state.squads[tk];
+        entries.forEach(e => {
+          let existing = squad.find(x => x.number === e.number);
+          if (existing) {
+            if (e.name) existing.position = e.name;
+            if (e.isFrontRow !== null) existing.isFrontRow = e.isFrontRow;
+          } else {
+            squad.push({
+              number: e.number,
+              position: e.name || `Player ${e.number}`,
+              isFrontRow: e.isFrontRow !== null ? e.isFrontRow : ((e.number >= 1 && e.number <= 3) || (e.number >= 16 && e.number <= 18)),
+              status: 'bench',
+              timerSec: 0,
+              timerType: null,
+              replacedBy: null,
+              yellowCount: 0
+            });
+          }
+        });
+        squad.sort((a, b) => a.number - b.number);
+      }
+
+      state.currentSubsTeam = tk;
+      lastBadgesSignature = '';
+      saveStateToStorage();
+      render();
+      if (document.getElementById('subsModal').style.display === 'flex') renderSubsModal();
+      closeModal('squadImportModal');
+      showToast(`📥 ${entries.length} Spieler für ${teamLabel} ${mode === 'replace' ? 'übernommen' : 'aktualisiert'}!`, '#2ea043', 3500);
+    }
+
     function openSubsModal() {
       renderSubsModal();
       document.getElementById('subsModal').style.display = 'flex';
